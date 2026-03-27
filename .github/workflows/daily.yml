@@ -10,6 +10,8 @@ on:
 jobs:
   send-digest:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit dedup_history.json back to repo
 
     steps:
       - name: Checkout repo
@@ -28,9 +30,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
-          # Optional overrides:
-          # FROM_EMAIL:      ${{ secrets.FROM_EMAIL }}
-          # STORY_COUNT:     7
+          DEMO: "1"          # ← TESTING: remove this line when ready for real news
 
       - name: Commit updated dedup history
         run: |
