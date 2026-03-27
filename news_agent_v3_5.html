@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelligence Digest · 情报简报</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0c0d0e;
+    --bg2:     #131416;
+    --bg3:     #1a1b1e;
+    --bg4:     #212226;
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text:    #dedad2;
+    --text2:   #8a8880;
+    --text3:   #4a4946;
+    --gold:    #c8a96e;
+    --gold2:   #e8c98a;
+    --teal:    #4db8a0;
+    --blue:    #6090d8;
+    --red:     #c86060;
+    --green:   #70b880;
+    --r:       10px;
+    --serif-en: 'EB Garamond', Georgia, serif;
+    --serif-cn: 'Noto Serif SC', serif;
+    --sans-cn:  'Noto Sans SC', sans-serif;
+    --mono:     'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans-cn);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── Header ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg2);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .masthead { display: flex; flex-direction: column; gap: 2px; }
+  .masthead-en {
+    font-family: var(--serif-en);
+    font-size: 20px; font-weight: 400;
+    color: var(--gold); letter-spacing: 0.06em;
+  }
+  .masthead-cn {
+    font-family: var(--serif-cn);
+    font-size: 11px; font-weight: 300;
+    color: var(--text3); letter-spacing: 0.16em;
+  }
+  .header-right { display: flex; gap: 10px; align-items: center; }
+  .datestamp {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text3); letter-spacing: 0.04em;
+  }
+
+  .btn {
+    padding: 7px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border2); background: transparent; color: var(--text2);
+    font-family: var(--sans-cn); transition: all 0.15s; letter-spacing: 0.02em;
+  }
+  .btn:hover { border-color: var(--gold); color: var(--gold); }
+  .btn.primary {
+    background: var(--gold); color: #0c0d0e;
+    border-color: var(--gold); font-weight: 500;
+  }
+  .btn.primary:hover { background: var(--gold2); border-color: var(--gold2); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Layout ── */
+  .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 57px); }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 24px 18px;
+    display: flex; flex-direction: column; gap: 22px;
+  }
+  .sidebar h3 {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 10px; font-weight: 400;
+    font-family: var(--mono);
+  }
+
+  .topic-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 4px; font-size: 12px;
+    margin: 3px 3px 3px 0; cursor: pointer;
+    border: 1px solid var(--border2); color: var(--text2);
+    transition: all 0.15s;
+  }
+  .topic-chip.on { border-color: var(--gold); color: var(--gold); background: rgba(200,169,110,0.07); }
+  .topic-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .cfg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cfg-lbl { font-size: 12px; color: var(--text2); }
+  select, input[type=email] {
+    width: 100%; margin-top: 6px;
+    background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+    padding: 7px 10px; border-radius: 6px; font-size: 12px;
+    font-family: var(--sans-cn);
+  }
+  select:focus, input:focus { outline: 1px solid var(--gold); }
+
+  /* source tier badges */
+  .tier-legend { display: flex; flex-direction: column; gap: 6px; }
+  .tier-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text2); }
+  .tier-badge {
+    font-family: var(--mono); font-size: 9px; padding: 1px 5px;
+    border-radius: 3px; letter-spacing: 0.06em; flex-shrink: 0;
+  }
+  .t1 { background: rgba(200,169,110,0.15); color: var(--gold); border: 1px solid rgba(200,169,110,0.3); }
+  .t2 { background: rgba(77,184,160,0.12); color: var(--teal); border: 1px solid rgba(77,184,160,0.25); }
+  .t3 { background: rgba(96,144,216,0.12); color: var(--blue); border: 1px solid rgba(96,144,216,0.25); }
+  .t4 { background: rgba(138,136,128,0.12); color: var(--text2); border: 1px solid var(--border2); }
+
+  /* ── Main ── */
+  .main { padding: 32px 36px; overflow-y: auto; }
+
+  .run-bar {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--r); padding: 16px 20px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: var(--bg2);
+  }
+  .run-bar-text { font-size: 12px; color: var(--text2); line-height: 1.7; }
+  .run-bar-text strong { color: var(--text); font-weight: 500; }
+
+  .status-log {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px 18px;
+    font-family: var(--mono); font-size: 11px; color: var(--text2);
+    margin-bottom: 24px; display: none; max-height: 140px; overflow-y: auto; line-height: 2;
+  }
+  .status-log.show { display: block; }
+  .ll { display: flex; gap: 10px; }
+  .lt { color: var(--text3); min-width: 52px; }
+  .lok { color: var(--green); }
+  .lrun { color: var(--blue); }
+  .lwarn { color: var(--gold); }
+
+  /* ── Digest header ── */
+  .digest-top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 22px; border-bottom: 1px solid var(--border); padding-bottom: 14px;
+  }
+  .digest-title-cn { font-family: var(--serif-cn); font-size: 20px; font-weight: 400; color: var(--text); }
+  .digest-title-en { font-family: var(--serif-en); font-size: 14px; font-style: italic; color: var(--text3); margin-top: 2px; }
+  .digest-meta { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: right; line-height: 1.8; }
+
+  /* ── News Card ── */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r); margin-bottom: 14px;
+    transition: border-color 0.15s;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  .card-top { padding: 18px 22px 14px; }
+
+  .card-meta {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .rank {
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    min-width: 20px;
+  }
+  .source-badge {
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 0.04em;
+  }
+  .topic-pill {
+    font-size: 10px; padding: 2px 8px; border-radius: 12px;
+    font-family: var(--mono); letter-spacing: 0.03em;
+  }
+  .pill-tech   { background: rgba(96,144,216,0.12);  color: var(--blue);  }
+  .pill-geo    { background: rgba(200,169,110,0.12); color: var(--gold);  }
+  .pill-macro  { background: rgba(77,184,160,0.12);  color: var(--teal);  }
+  .pill-career { background: rgba(112,184,128,0.12); color: var(--green); }
+  .conf-badge {
+    margin-left: auto; font-family: var(--mono); font-size: 9px;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 0.06em; border: 1px solid;
+  }
+  .ch  { border-color: var(--green); color: var(--green); }
+  .cm  { border-color: var(--gold);  color: var(--gold);  }
+  .cl  { border-color: var(--text3); color: var(--text3); }
+
+  /* Bilingual headline block — EN primary */
+  .headline-block { margin-bottom: 14px; }
+  .headline-en {
+    font-family: var(--serif-en); font-size: 17px; font-weight: 400;
+    line-height: 1.5; color: var(--text); margin-bottom: 5px;
+  }
+  .headline-en a { color: inherit; text-decoration: none; }
+  .headline-en a:hover { color: var(--gold); }
+  .headline-cn {
+    font-family: var(--serif-cn); font-size: 12px; font-weight: 300;
+    line-height: 1.6; color: var(--text3);
+  }
+  .headline-cn a { color: inherit; text-decoration: none; }
+  .headline-cn a:hover { color: var(--gold); }
+
+  /* 5W1H bilingual */
+  .facts-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    margin-bottom: 12px; font-size: 12px;
+  }
+  .facts-col { padding: 12px 14px; }
+  .facts-col.cn-col { border-right: 1px solid var(--border); }
+  .facts-lang {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .fact-row { display: flex; gap: 6px; margin-bottom: 5px; line-height: 1.6; }
+  .fact-label {
+    font-family: var(--mono); font-size: 9px; color: var(--text3);
+    min-width: 26px; padding-top: 2px; letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .fact-val { color: var(--text2); }
+
+  /* Analysis block */
+  .analysis {
+    background: var(--bg3); border-top: 1px solid var(--border);
+    padding: 14px 22px;
+  }
+  .analysis-label {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 10px;
+  }
+  .a-row { margin-bottom: 10px; }
+  .a-row:last-child { margin-bottom: 0; }
+  .a-tag {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+    display: inline-block; padding: 1px 6px; border-radius: 3px; margin-bottom: 4px;
+  }
+  .at-invest { background: rgba(112,184,128,0.12); color: var(--green); }
+  .at-geo    { background: rgba(200,169,110,0.12); color: var(--gold); }
+  .at-career { background: rgba(96,144,216,0.12);  color: var(--blue); }
+
+  .a-bilingual { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .a-en { font-family: var(--serif-en); font-size: 13px; color: var(--text2); line-height: 1.7; }
+  .a-cn { font-family: var(--sans-cn); font-size: 11px; color: var(--text3); line-height: 1.7; }
+
+  /* Card footer */
+  .card-footer {
+    padding: 8px 22px 10px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    flex-wrap: wrap;
+  }
+  .src-link { color: var(--text3); text-decoration: none; }
+  .src-link:hover { color: var(--gold); }
+  .official-mark {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9px; color: var(--gold); letter-spacing: 0.06em;
+  }
+  .official-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 80px 20px; color: var(--text3);
+  }
+  .empty-icon {
+    font-family: var(--serif-cn); font-size: 48px; color: var(--border2);
+    margin-bottom: 16px; letter-spacing: 0.2em;
+  }
+  .empty p { font-size: 13px; line-height: 1.9; }
+
+  /* Spinner */
+  .spin {
+    display: inline-block; width: 12px; height: 12px;
+    border: 1.5px solid rgba(200,169,110,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%; animation: sp 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* email preview */
+  .email-prev {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 24px; margin-top: 20px; display: none;
+  }
+  .email-prev.show { display: block; }
+  .email-prev h3 {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 16px;
+  }
+
+  /* ── Feedback bar ── */
+  .feedback-bar {
+    padding: 10px 22px 12px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .fb-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-right: 2px; }
+  .fb-btn {
+    padding: 4px 11px; border-radius: 5px; font-size: 11px; cursor: pointer;
+    border: 1px solid var(--border2); background: transparent; color: var(--text3);
+    font-family: var(--mono); transition: all 0.15s; letter-spacing: 0.04em;
+  }
+  .fb-btn:hover { border-color: var(--border2); color: var(--text); }
+  .fb-btn.liked    { border-color: var(--green); color: var(--green); background: rgba(112,184,128,0.08); }
+  .fb-btn.disliked { border-color: var(--red);   color: var(--red);   background: rgba(200,96,96,0.08); }
+  .fb-escalate-wrap { position: relative; display: inline-block; }
+  .fb-escalate-menu {
+    display: none; position: absolute; bottom: 130%; left: 0;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 7px; padding: 4px; min-width: 180px; z-index: 50;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .fb-escalate-menu.open { display: block; }
+  .fb-escalate-opt {
+    display: block; width: 100%; text-align: left;
+    padding: 8px 12px; font-size: 11px; font-family: var(--mono);
+    color: var(--text2); background: none; border: none; cursor: pointer;
+    border-radius: 5px; letter-spacing: 0.03em; transition: background 0.1s;
+  }
+  .fb-escalate-opt:hover { background: var(--bg4); color: var(--text); }
+  .fb-escalate-opt.sent { color: var(--gold); }
+
+  /* dedup / major-update badge */
+  .update-badge {
+    font-family: var(--mono); font-size: 9px; padding: 2px 7px;
+    border-radius: 3px; letter-spacing: 0.08em;
+    background: rgba(77,184,160,0.12); color: var(--teal);
+    border: 1px solid rgba(77,184,160,0.25);
+  }
+
+  /* preference summary in sidebar */
+  .pref-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
+  .pref-key { color: var(--text3); font-family: var(--mono); }
+  .pref-val { color: var(--text2); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .a-bilingual, .facts-grid { grid-template-columns: 1fr; }
+    .facts-col.cn-col { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="masthead">
+    <div class="masthead-en">Intelligence Digest</div>
+    <div class="masthead-cn">情报简报</div>
+  </div>
+  <div class="header-right">
+    <div class="datestamp" id="datestamp"></div>
+    <button class="btn" onclick="showEmail()">Email Preview</button>
+    <button class="btn primary" id="runbtn" onclick="runAgent()">Run Agent</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+
+    <div>
+      <h3>Topics · 话题</h3>
+      <span class="topic-chip on" data-t="tech"><span class="dot"></span>AI · High-tech</span>
+      <span class="topic-chip on" data-t="geo"><span class="dot"></span>Geopolitics</span>
+      <span class="topic-chip on" data-t="macro"><span class="dot"></span>Macro · Markets</span>
+      <span class="topic-chip on" data-t="career"><span class="dot"></span>Career · AI pivot</span>
+      <span class="topic-chip" data-t="policy"><span class="dot"></span>Policy · Regulation</span>
+    </div>
+
+    <div>
+      <h3>Source tiers</h3>
+      <div class="tier-legend">
+        <div class="tier-row"><span class="tier-badge t1">T1</span>Govt · Central banks · Official</div>
+        <div class="tier-row"><span class="tier-badge t2">T2</span>Corp IR · Official press releases</div>
+        <div class="tier-row"><span class="tier-badge t3">T3</span>Reuters · Bloomberg · FT · Xinhua</div>
+        <div class="tier-row"><span class="tier-badge t4">T4</span>Other media · flagged</div>
+      </div>
+    </div>
+
+    <div>
+      <h3>Delivery</h3>
+      <div class="cfg-lbl" style="margin-bottom:6px">Schedule</div>
+      <select id="sched">
+        <option value="7am">Daily 07:00 (Toronto)</option>
+        <option value="8am">Daily 08:00 (Toronto)</option>
+        <option value="manual">Manual only</option>
+      </select>
+      <div style="margin-top:12px">
+        <div class="cfg-lbl" style="margin-bottom:6px">Email</div>
+        <input type="email" id="email" placeholder="your@email.com">
+      </div>
+      <div style="margin-top:12px">
+        <div class="cfg-lbl" style="margin-bottom:6px">Stories per run</div>
+        <select id="cnt">
+          <option value="5">5 stories</option>
+          <option value="7" selected>7 stories</option>
+          <option value="10">10 stories</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <h3>Your preferences</h3>
+      <div id="pref-summary">
+        <div class="pref-row"><span class="pref-key">Liked</span><span class="pref-val" id="ps-liked">0</span></div>
+        <div class="pref-row"><span class="pref-key">Disliked</span><span class="pref-val" id="ps-disliked">0</span></div>
+        <div class="pref-row"><span class="pref-key">Escalated</span><span class="pref-val" id="ps-escalated">0</span></div>
+        <div class="pref-row"><span class="pref-key">Seen stories</span><span class="pref-val" id="ps-seen">0</span></div>
+        <button class="btn" style="margin-top:8px;font-size:11px;width:100%" onclick="clearHistory()">Clear history</button>
+      </div>
+    </div>
+
+    <div style="margin-top:auto">
+      <h3>Last run</h3>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="lastrun">—</div>
+    </div>
+
+  </div>
+
+  <div class="main">
+    <div class="run-bar">
+      <div class="run-bar-text">
+        Prioritises <strong>government statements, central bank announcements, and official corporate IR</strong> as primary sources.<br>
+        Each story: 5W facts + investment · geopolitical · career analysis · confidence rating · bilingual.
+      </div>
+      <button class="btn primary" onclick="runAgent()">Run Agent</button>
+    </div>
+
+    <div class="status-log" id="slog"></div>
+
+    <div id="digest">
+      <div class="empty">
+        <div class="empty-icon">简</div>
+        <p>Click <strong>Run Agent</strong> to generate today's intelligence digest.<br>
+        <span style="font-size:12px;color:var(--text3)">点击运行，生成今日中英双语情报简报。</span></p>
+      </div>
+    </div>
+
+    <div class="email-prev" id="eprev">
+      <h3>Email Preview · 邮件预览</h3>
+      <div id="epcontent" style="font-size:12px;color:var(--text2);line-height:1.9"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── date (English) ──
+const now = new Date();
+document.getElementById('datestamp').textContent =
+  now.toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── topic chips ──
+document.querySelectorAll('.topic-chip').forEach(c =>
+  c.addEventListener('click', () => c.classList.toggle('on')));
+
+let items = [];
+
+// ── localStorage helpers ──
+function lsGet(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } }
+function lsSet(k, v)   { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+// history: { [headlineKey]: { date, isMajorUpdate } }
+function getHistory()    { return lsGet('digest_history', {}); }
+function saveHistory(h)  { lsSet('digest_history', h); }
+// feedback: { [headlineKey]: 'liked'|'disliked'|'escalated' }
+function getFeedback()   { return lsGet('digest_feedback', {}); }
+function saveFeedback(f) { lsSet('digest_feedback', f); }
+// escalations log
+function getEscalations()   { return lsGet('digest_escalations', []); }
+function saveEscalations(e) { lsSet('digest_escalations', e); }
+
+function headlineKey(it) {
+  return (it.headlineEn || it.headlineCn || '').toLowerCase().replace(/\W+/g,'_').slice(0,60);
+}
+
+function updatePrefSummary() {
+  const fb = getFeedback();
+  const hist = getHistory();
+  const esc = getEscalations();
+  const vals = Object.values(fb);
+  document.getElementById('ps-liked').textContent    = vals.filter(v=>v==='liked').length;
+  document.getElementById('ps-disliked').textContent = vals.filter(v=>v==='disliked').length;
+  document.getElementById('ps-escalated').textContent = esc.length;
+  document.getElementById('ps-seen').textContent     = Object.keys(hist).length;
+}
+
+function clearHistory() {
+  if (!confirm('Clear all seen-story history and preferences?')) return;
+  localStorage.removeItem('digest_history');
+  localStorage.removeItem('digest_feedback');
+  localStorage.removeItem('digest_escalations');
+  updatePrefSummary();
+  log('ok', 'History and preferences cleared.');
+}
+
+updatePrefSummary();
+
+// ── log ──
+function log(type, msg) {
+  const el = document.getElementById('slog');
+  el.classList.add('show');
+  const t = new Date().toLocaleTimeString('en-CA',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d = document.createElement('div');
+  d.className = 'll';
+  d.innerHTML = `<span class="lt">${t}</span><span class="l${type}">${msg}</span>`;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Claude call ──
+async function callClaude(sys, user) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: sys,
+      messages: [{role:'user', content: user}],
+      tools: [{type:'web_search_20250305', name:'web_search'}]
+    })
+  });
+  const d = await r.json();
+  return (d.content||[]).map(b => b.type==='text' ? b.text : '').join('');
+}
+
+// ── run ──
+async function runAgent() {
+  const btn = document.getElementById('runbtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Running…';
+  document.getElementById('slog').innerHTML = '';
+  document.getElementById('eprev').classList.remove('show');
+
+  const topics = [...document.querySelectorAll('.topic-chip.on')].map(c=>c.dataset.t).join(', ');
+  const cnt = document.getElementById('cnt').value;
+  const hist = getHistory();
+  const recentKeys = Object.keys(hist).slice(-40).join(', ');
+  const today = new Date().toISOString().slice(0,10);
+
+  log('run', `Starting · topics: ${topics} · count: ${cnt}`);
+  log('run', `Dedup: ${Object.keys(hist).length} stories in history`);
+  log('run', 'Connecting to Claude API + web search…');
+
+  document.getElementById('digest').innerHTML =
+    `<div style="text-align:center;padding:60px;color:var(--text3);font-size:13px"><span class="spin"></span> Fetching and analysing news…</div>`;
+
+  const SYS = `You are an elite intelligence analyst. Your task is to find today's most important news and return a strict JSON array — bilingual English + Chinese — with English as the primary language.
+
+SOURCE PRIORITY RULES (mandatory):
+T1 (highest): Government official statements, White House/State Council/Parliament releases, central bank announcements (Fed/PBOC/ECB), regulatory official notices, military official statements.
+T2: Major corporate IR pages, earnings calls, official press releases (Apple Newsroom, NVIDIA IR, Huawei official site), exchange filings, SEC/HKEX/SSE documents.
+T3: Reuters, Bloomberg, Xinhua, FT, Nikkei, WSJ, SCMP.
+T4: Other media, blogs, opinion pieces — must note T4 in output, confidence never exceeds MED.
+
+Rules:
+- T4 sources: confidence MAX is MED, never HIGH.
+- If same event has T1/T2 source available, use that and ignore T4.
+- sourceUrl must be the original official URL, not an aggregator.
+- newsDate must be the actual publication/announcement date in YYYY-MM-DD format.
+- isMajorUpdate: set true ONLY if this story is a significant new development on a previously known topic (e.g. a policy was announced before, now it's been signed into law). Otherwise false.
+
+DEDUPLICATION: The following story keys were already sent recently — do NOT include them unless isMajorUpdate is true:
+[RECENT_KEYS]
+
+OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix. Each object:
+{
+  "rank": number,
+  "sourceTier": "T1"|"T2"|"T3"|"T4",
+  "source": "Source name (English)",
+  "sourceCn": "来源名称（中文）",
+  "sourceUrl": "URL",
+  "topic": "tech"|"geo"|"macro"|"career"|"policy",
+  "confidence": "HIGH"|"MED"|"LOW",
+  "newsDate": "YYYY-MM-DD",
+  "isMajorUpdate": false,
+  "updateNote": "",
+  "headlineEn": "English headline (primary, concise and specific)",
+  "headlineCn": "中文标题",
+  "whoEn": "who",
+  "whoCn": "何人",
+  "whatEn": "what happened",
+  "whatCn": "何事",
+  "whenEn": "when (include specific date)",
+  "whenCn": "何时（含具体日期）",
+  "whereEn": "where",
+  "whereCn": "何地",
+  "whyEn": "why/context",
+  "whyCn": "为何/背景",
+  "investEn": "[Analysis] Investment implications…",
+  "investCn": "[分析] 投资影响…",
+  "geoEn": "[Analysis] Geopolitical implications…",
+  "geoCn": "[分析] 地缘政治影响…",
+  "careerEn": "[Analysis] Career/AI job market implications…",
+  "careerCn": "[分析] 对AI/科技职场的影响…"
+}`.replace('[RECENT_KEYS]', recentKeys || 'none');
+
+  const USER = `Search for the ${cnt} most important news stories from the last 24 hours on topics: ${topics}.
+Focus on: AI/semiconductors, US-China relations, geopolitics, macro, tech policy.
+Today's date: ${today}. Include the exact newsDate for each story.
+Prioritise T1 (government/central bank official) and T2 (major corporate official) sources.
+Return complete JSON array.`;
+
+  try {
+    log('run', 'Querying Claude with web search…');
+    const raw = await callClaude(SYS, USER);
+    log('ok', 'Response received — parsing…');
+
+    let parsed;
+    try {
+      const m = raw.match(/\[[\s\S]*\]/);
+      if (m) parsed = JSON.parse(m[0]);
+      else throw new Error('no array');
+    } catch {
+      log('warn', 'Parse failed — loading demo data');
+      parsed = demo(cnt);
+    }
+
+    // dedup filter: skip if in history AND not a major update
+    const newHist = { ...hist };
+    const filtered = parsed.filter(it => {
+      const k = headlineKey(it);
+      if (newHist[k] && !it.isMajorUpdate) return false;
+      newHist[k] = { date: it.newsDate || today, isMajorUpdate: !!it.isMajorUpdate };
+      return true;
+    });
+
+    if (filtered.length < parsed.length) {
+      log('ok', `Dedup: removed ${parsed.length - filtered.length} already-seen stories`);
+    }
+
+    saveHistory(newHist);
+    items = filtered.length ? filtered : parsed; // fallback if all dupes
+    log('ok', `${items.length} stories · source-verified · bilingual`);
+    render(items);
+    updatePrefSummary();
+    document.getElementById('lastrun').textContent =
+      new Date().toLocaleTimeString('en-CA',{hour12:false});
+
+  } catch(e) {
+    log('warn', `Error: ${e.message} — loading demo data`);
+    items = demo(cnt);
+    render(items);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Run Agent';
+}
+
+// ── render ──
+const topicLabelEn = {tech:'AI/Tech',geo:'Geopolitics',macro:'Macro',career:'Career',policy:'Policy'};
+const pillCls      = {tech:'pill-tech',geo:'pill-geo',macro:'pill-macro',career:'pill-career',policy:'pill-tech'};
+const confCls      = {HIGH:'ch',MED:'cm',LOW:'cl'};
+const tierClsMap   = {T1:'t1',T2:'t2',T3:'t3',T4:'t4'};
+
+function render(data) {
+  const area = document.getElementById('digest');
+  area.innerHTML = `
+    <div class="digest-top">
+      <div>
+        <div class="digest-title-en" style="font-family:var(--serif-en);font-size:22px;font-weight:400;color:var(--text)">Today's Intelligence Digest</div>
+        <div style="font-family:var(--serif-cn);font-size:13px;color:var(--text3);margin-top:3px">今日情报简报</div>
+      </div>
+      <div class="digest-meta">
+        ${data.length} stories · ${new Date().toLocaleTimeString('en-CA',{hour12:false})}
+      </div>
+    </div>`;
+
+  const feedback = getFeedback();
+
+  data.forEach(it => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const srcUrl = it.sourceUrl || '#';
+    const isOfficial = it.sourceTier === 'T1' || it.sourceTier === 'T2';
+    const key = headlineKey(it);
+    const currentFb = feedback[key] || null;
+
+    // Format WHEN: combine date + time description
+    const dateStr = it.newsDate ? ` · ${it.newsDate}` : '';
+    const whenEnFull = it.whenEn ? `${it.whenEn}${dateStr}` : (it.newsDate || '—');
+    const whenCnFull = it.whenCn ? `${it.whenCn}${it.newsDate ? '（'+it.newsDate+'）' : ''}` : '—';
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="rank">#${it.rank}</span>
+          <span class="source-badge ${tierClsMap[it.sourceTier]||'t4'}">${it.sourceTier||'T3'}</span>
+          <span style="font-size:12px;color:var(--text2)">${it.source||it.sourceCn||''}</span>
+          <span class="topic-pill ${pillCls[it.topic]||'pill-tech'}">${topicLabelEn[it.topic]||it.topic}</span>
+          ${isOfficial ? `<span class="official-mark"><span class="official-dot"></span>Official</span>` : ''}
+          ${it.isMajorUpdate ? `<span class="update-badge">Major update</span>` : ''}
+          <span class="conf-badge ${confCls[it.confidence]||'cm'}">${it.confidence}</span>
+        </div>
+
+        <div class="headline-block">
+          <div class="headline-en">${srcUrl !== '#' ? `<a href="${srcUrl}" target="_blank">${it.headlineEn}</a>` : it.headlineEn}</div>
+          <div class="headline-cn">${srcUrl !== '#' ? `<a href="${srcUrl}" target="_blank">${it.headlineCn}</a>` : it.headlineCn}</div>
+          ${it.updateNote ? `<div style="font-size:11px;color:var(--teal);font-family:var(--mono);margin-top:4px">Update: ${it.updateNote}</div>` : ''}
+        </div>
+
+        <div class="facts-grid">
+          <div class="facts-col cn-col" style="border-right:1px solid var(--border)">
+            <div class="facts-lang">English · 5W</div>
+            <div class="fact-row"><span class="fact-label">WHO</span><span class="fact-val">${it.whoEn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">WHAT</span><span class="fact-val">${it.whatEn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">WHEN</span><span class="fact-val">${whenEnFull}</span></div>
+            <div class="fact-row"><span class="fact-label">WHERE</span><span class="fact-val">${it.whereEn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">WHY</span><span class="fact-val">${it.whyEn||'—'}</span></div>
+          </div>
+          <div class="facts-col">
+            <div class="facts-lang">中文 · 五要素</div>
+            <div class="fact-row"><span class="fact-label">何人</span><span class="fact-val">${it.whoCn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">何事</span><span class="fact-val">${it.whatCn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">何时</span><span class="fact-val">${whenCnFull}</span></div>
+            <div class="fact-row"><span class="fact-label">何地</span><span class="fact-val">${it.whereCn||'—'}</span></div>
+            <div class="fact-row"><span class="fact-label">为何</span><span class="fact-val">${it.whyCn||'—'}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analysis">
+        <div class="analysis-label">Analysis · 分析 (inference — not confirmed fact · 推断，非确认事实)</div>
+
+        <div class="a-row">
+          <span class="a-tag at-invest">Investment · 投资</span>
+          <div class="a-bilingual">
+            <div class="a-en">${it.investEn||'—'}</div>
+            <div class="a-cn">${it.investCn||'—'}</div>
+          </div>
+        </div>
+
+        <div class="a-row">
+          <span class="a-tag at-geo">Geopolitics · 地缘</span>
+          <div class="a-bilingual">
+            <div class="a-en">${it.geoEn||'—'}</div>
+            <div class="a-cn">${it.geoCn||'—'}</div>
+          </div>
+        </div>
+
+        <div class="a-row">
+          <span class="a-tag at-career">Career · 职场</span>
+          <div class="a-bilingual">
+            <div class="a-en">${it.careerEn||'—'}</div>
+            <div class="a-cn">${it.careerCn||'—'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        ${isOfficial ? `<span class="official-mark"><span class="official-dot"></span>Official source</span> ·` : ''}
+        <span>${it.source||it.sourceCn||''}</span>
+        ${it.newsDate ? `<span style="color:var(--text3)">Published ${it.newsDate}</span>` : ''}
+        ${srcUrl !== '#' ? `<a href="${srcUrl}" class="src-link" target="_blank">→ Source</a>` : ''}
+      </div>
+
+      <div class="feedback-bar">
+        <span class="fb-label">Feedback</span>
+        <button class="fb-btn ${currentFb==='liked'?'liked':''}" id="fb-like-${key}" onclick="handleFeedback('${key}','liked',this)">
+          ${currentFb==='liked' ? '✓ Liked' : 'Like'}
+        </button>
+        <button class="fb-btn ${currentFb==='disliked'?'disliked':''}" id="fb-dis-${key}" onclick="handleFeedback('${key}','disliked',this)">
+          ${currentFb==='disliked' ? '✗ Disliked' : 'Dislike'}
+        </button>
+        <div class="fb-escalate-wrap" id="esc-wrap-${key}">
+          <button class="fb-btn" onclick="toggleEscalate('${key}')">Escalate ▾</button>
+          <div class="fb-escalate-menu" id="esc-menu-${key}">
+            <button class="fb-escalate-opt" onclick="handleEscalate('${key}','factual_error','News facts are incorrect')">News facts are incorrect</button>
+            <button class="fb-escalate-opt" onclick="handleEscalate('${key}','analysis_error','Analysis is flawed')">Analysis is flawed</button>
+            <button class="fb-escalate-opt" onclick="handleEscalate('${key}','duplicate','Duplicate — already sent before')">Duplicate — already sent</button>
+          </div>
+        </div>
+        <span id="fb-sent-${key}" style="font-family:var(--mono);font-size:9px;color:var(--text3);display:none">Feedback saved</span>
+      </div>`;
+
+    area.appendChild(card);
+  });
+
+  // close escalate menus when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.fb-escalate-wrap')) {
+      document.querySelectorAll('.fb-escalate-menu.open').forEach(m => m.classList.remove('open'));
+    }
+  }, {capture:true});
+}
+
+// ── feedback handlers ──
+function handleFeedback(key, type, btn) {
+  const fb = getFeedback();
+  const prev = fb[key];
+  // toggle off if same
+  if (prev === type) {
+    delete fb[key];
+    btn.classList.remove('liked','disliked');
+    btn.textContent = type === 'liked' ? 'Like' : 'Dislike';
+  } else {
+    fb[key] = type;
+    // reset sibling
+    const sibId = type === 'liked' ? `fb-dis-${key}` : `fb-like-${key}`;
+    const sib = document.getElementById(sibId);
+    if (sib) { sib.classList.remove('liked','disliked'); sib.textContent = type === 'liked' ? 'Dislike' : 'Like'; }
+    btn.classList.add(type);
+    btn.textContent = type === 'liked' ? '✓ Liked' : '✗ Disliked';
+  }
+  saveFeedback(fb);
+  updatePrefSummary();
+  flashSent(key);
+}
+
+function toggleEscalate(key) {
+  const menu = document.getElementById(`esc-menu-${key}`);
+  const wasOpen = menu.classList.contains('open');
+  document.querySelectorAll('.fb-escalate-menu.open').forEach(m => m.classList.remove('open'));
+  if (!wasOpen) menu.classList.add('open');
+}
+
+function handleEscalate(key, reason, label) {
+  const esc = getEscalations();
+  const entry = { key, reason, label, date: new Date().toISOString() };
+  esc.push(entry);
+  saveEscalations(esc);
+  document.getElementById(`esc-menu-${key}`).classList.remove('open');
+  // mark the button
+  const wrap = document.getElementById(`esc-wrap-${key}`);
+  if (wrap) wrap.querySelector('.fb-btn').textContent = `⚑ ${label}`;
+  updatePrefSummary();
+  flashSent(key);
+}
+
+function flashSent(key) {
+  const el = document.getElementById(`fb-sent-${key}`);
+  if (!el) return;
+  el.style.display = 'inline';
+  setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+// ── email preview ──
+function showEmail() {
+  if (!items.length) { alert('Run Agent first to generate a digest.'); return; }
+  const d = new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'});
+  let h = `<strong>Subject: Intelligence Digest · ${d}</strong><br><br>`;
+  h += `<em>Your daily briefing: ${items.length} stories · AI/Tech · Geopolitics · Macro · Career · Bilingual EN/CN · Est. read: 5–8 min.</em><br><br>`;
+  h += `<hr style="border-color:#333;margin:10px 0"><br>`;
+  items.forEach((it,i) => {
+    const tier = it.sourceTier||'T3';
+    const dateStr = it.newsDate ? ` · ${it.newsDate}` : '';
+    h += `<strong>${i+1}. ${it.headlineEn}</strong><br>`;
+    h += `<span style="color:#666">${it.headlineCn}</span><br>`;
+    h += `<small style="color:#888">[${tier}] ${it.source||it.sourceCn} · ${topicLabelEn[it.topic]||''} · ${it.confidence}${dateStr}</small><br><br>`;
+    h += `<strong>Facts:</strong> ${it.whoEn} — ${it.whatEn} (${it.whenEn}${dateStr}, ${it.whereEn}). ${it.whyEn}<br>`;
+    h += `<em style="color:#888">事实：${it.whoCn} ${it.whatCn}（${it.whenCn}，${it.whereCn}）。${it.whyCn}</em><br><br>`;
+    if (it.investEn) h += `<strong>Investment:</strong> ${it.investEn}<br>`;
+    if (it.geoEn)    h += `<strong>Geopolitics:</strong> ${it.geoEn}<br>`;
+    if (it.careerEn) h += `<strong>Career:</strong> ${it.careerEn}<br>`;
+    if (it.sourceUrl) h += `<a href="${it.sourceUrl}" style="color:#6090d8">→ Source</a>`;
+    h += `<br><br><hr style="border-color:#333;margin:10px 0"><br>`;
+  });
+  // ── feedback & unsubscribe footer ──
+  //
+  // 👍 👎  → thankyou.html (GitHub Pages)
+  //           · displays Thank You message
+  //           · silently submits to Google Form via fetch no-cors (no redirect)
+  //           · window.close() after 3s
+  // ⚑      → Google Form viewform (date pre-filled, user describes issue)
+  // Unsub  → Google Form viewform (user enters email + reason)
+  //
+  const feedDate = new Date().toISOString().slice(0,10);
+
+  const FORM_ID      = '1FAIpQLScN3lYHkYmg0tdXkPi9ofkhUKcIqdf2HTa5J6N2j9t-0Ov8zQ';
+  const ENTRY_DATE   = 'entry.763436474';
+  const ENTRY_RATING = 'entry.771339392';
+  const UNSUB_ID     = '1FAIpQLSc5y-sjQt7f3w18bqQT2rUVRQ8Ef5mJ9fCmufKlmiKqYcEFHw';
+
+  const THANKYOU_BASE = `https://mavis1101.github.io/News_Agent/thankyou.html`;
+
+  const SUBMIT_USEFUL = `${THANKYOU_BASE}?rating=useful&date=${feedDate}`;
+  const SUBMIT_NOTREL = `${THANKYOU_BASE}?rating=not_relevant&date=${feedDate}`;
+  const OPEN_ISSUE    = `https://docs.google.com/forms/d/e/${FORM_ID}/viewform?${ENTRY_DATE}=${feedDate}&${ENTRY_RATING}=issue`;
+  const OPEN_UNSUB    = `https://docs.google.com/forms/d/e/${UNSUB_ID}/viewform`;
+
+  h += `<div style="margin-top:28px;padding-top:18px;border-top:1px solid #2a2a2a;text-align:center">`;
+  h += `<p style="font-size:13px;color:#666;margin-bottom:14px;font-family:Georgia,serif">How was today's digest?</p>`;
+  h += `<div style="display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:18px">`;
+  h += `<a href="${SUBMIT_USEFUL}" target="_blank" style="display:inline-block;padding:8px 18px;border:1px solid #3a7a50;border-radius:6px;color:#70b880;text-decoration:none;font-size:13px;font-family:Georgia,serif">👍 Useful today</a>`;
+  h += `<a href="${SUBMIT_NOTREL}" target="_blank" style="display:inline-block;padding:8px 18px;border:1px solid #6a3a3a;border-radius:6px;color:#c86060;text-decoration:none;font-size:13px;font-family:Georgia,serif">👎 Not relevant</a>`;
+  h += `<a href="${OPEN_ISSUE}"   target="_blank" style="display:inline-block;padding:8px 18px;border:1px solid #7a6030;border-radius:6px;color:#d4943a;text-decoration:none;font-size:13px;font-family:Georgia,serif">⚑ Report an issue</a>`;
+  h += `</div>`;
+  h += `<p style="font-size:11px;color:#444;font-family:Georgia,serif">`;
+  h += `Analysis sections are AI inference — not confirmed fact. Always verify before making decisions.<br>`;
+  h += `分析部分为AI推断，非确认事实。<br><br>`;
+  h += `<a href="${OPEN_UNSUB}" target="_blank" style="color:#444;text-decoration:underline;font-size:11px">Unsubscribe</a>`;
+  h += `</p></div>`;
+
+  document.getElementById('epcontent').innerHTML = h;
+  const ep = document.getElementById('eprev');
+  ep.classList.add('show');
+  ep.scrollIntoView({behavior:'smooth'});
+}
+
+// ── demo data ──
+function demo(cnt) {
+  const all = [
+  {
+    rank:1, sourceTier:'T1',
+    source:'Federal Reserve', sourceCn:'美联储官方声明',
+    sourceUrl:'https://www.federalreserve.gov/newsevents/pressreleases.htm',
+    topic:'macro', confidence:'HIGH', newsDate:'2026-03-25', isMajorUpdate:false, updateNote:'',
+    headlineEn:'Fed holds rates steady; Powell signals rate cuts pushed back to Q4 2026',
+    headlineCn:'美联储维持利率不变，鲍威尔暗示降息窗口推迟至Q4',
+    whoEn:'Fed Chair Jerome Powell, FOMC', whoCn:'美联储主席鲍威尔，FOMC',
+    whatEn:'Post-meeting statement holds federal funds rate; new language adds "insufficiently anchored" inflation expectations',
+    whatCn:'会后声明维持利率不变，新增"通胀预期未充分锚定"措辞',
+    whenEn:'March 25, 2026, FOMC meeting', whenCn:'2026年3月25日，FOMC会议',
+    whereEn:'Washington D.C., Federal Reserve HQ', whereCn:'华盛顿特区，美联储总部',
+    whyEn:'Services inflation stickier than expected; labour market still tight',
+    whyCn:'服务业通胀韧性超预期，劳动力市场偏紧',
+    investEn:'[Analysis] Dollar strengthens short-term; Treasury yield pressure continues. Rate-sensitive growth stocks face headwinds. Gold may find stagflation support.',
+    investCn:'[推断] 美元短期走强，美债收益率上行压力延续。利率敏感型成长股承压。黄金可能因滞胀预期获支撑。',
+    geoEn:'[Analysis] Sustained high rates reinforce dollar dominance; EM debt servicing stress intensifies for dollar-indebted nations.',
+    geoCn:'[推断] 高利率延续强化美元霸权，新兴市场偿债压力加剧。',
+    careerEn:'[Analysis] FinTech funding conditions remain tight; startup hiring freezes persist. Bank AI compliance roles grow counter-cyclically.',
+    careerCn:'[推断] 金融科技融资环境持续收紧，初创公司招聘冻结延续。传统银行AI合规岗位逆势增长。'
+  },
+  {
+    rank:2, sourceTier:'T1',
+    source:"State Council of China", sourceCn:'中国国务院',
+    sourceUrl:'http://www.gov.cn',
+    topic:'tech', confidence:'HIGH', newsDate:'2026-03-24', isMajorUpdate:false, updateNote:'',
+    headlineEn:'China State Council releases AI Industry Action Plan 2026–2030, targeting compute self-sufficiency',
+    headlineCn:'国务院发布《人工智能产业发展行动计划（2026-2030）》',
+    whoEn:'State Council of China, Ministry of Industry and Information Technology',
+    whoCn:'中国国务院，工业和信息化部',
+    whatEn:'Five-year plan targets 60% domestic AI chip market share by 2030; 10 national AI compute centres designated',
+    whatCn:'五年规划目标：2030年国产AI芯片市占率达60%，建设10个国家级AI计算中心',
+    whenEn:'March 24, 2026, State Council executive meeting', whenCn:'2026年3月24日，国务院常务会议',
+    whereEn:'Beijing, China', whereCn:'北京',
+    whyEn:'Response to US export controls; advancing semiconductor import substitution strategy',
+    whyCn:'应对美国出口管制，推进半导体国产替代战略',
+    investEn:'[Analysis] Bullish for SMIC, Hua Hong, Cambricon. Accelerating Chinese AI infrastructure benefits domestic cloud (Alibaba Cloud, Huawei Cloud). Watch ASML compliance scrutiny.',
+    investCn:'[推断] 中芯国际、华虹半导体、寒武纪等国产芯片股利好。中国AI基础设施加速，拉动国内云厂商扩张。',
+    geoEn:'[Analysis] US-China tech decoupling enters acceleration phase. Taiwan chip supply chain strategic value reinforced. European chipmakers face intensified compliance scrutiny.',
+    geoCn:'[推断] 中美科技脱钩进入加速确认期。台湾芯片供应链战略价值凸显。欧洲半导体设备商面临更严格合规压力。',
+    careerEn:'[Analysis] Domestic AI chip/architecture engineer salaries surge in China. Bargaining power rises for relevant engineers in Canada/US.',
+    careerCn:'[推断] 国内AI芯片/系统架构工程师薪资大幅上涨。在加拿大/美国的相关工程师议价能力提升。'
+  },
+  {
+    rank:3, sourceTier:'T2',
+    source:'NVIDIA Investor Relations', sourceCn:'NVIDIA 投资者关系',
+    sourceUrl:'https://investor.nvidia.com',
+    topic:'tech', confidence:'HIGH', newsDate:'2026-03-25', isMajorUpdate:false, updateNote:'',
+    headlineEn:'NVIDIA Blackwell Ultra mass production begins; Q1 shipments exceed guidance by 50%',
+    headlineCn:'NVIDIA宣布Blackwell Ultra量产出货，Q1出货量超预期50%',
+    whoEn:'NVIDIA CEO Jensen Huang, CFO Colette Kress', whoCn:'NVIDIA CEO黄仁勋，CFO Colette Kress',
+    whatEn:'Official IR release: B200 Ultra in mass production for Microsoft, Google, Amazon; Q2 revenue guidance raised to $42B',
+    whatCn:'官方IR公告：B200 Ultra已开始量产，Q2营收指引上调至420亿美元',
+    whenEn:'March 25, 2026, earnings call', whenCn:'2026年3月25日，财报电话会议',
+    whereEn:'Santa Clara, California', whereCn:'加利福尼亚州圣克拉拉',
+    whyEn:'Hyperscaler AI training demand continues surging; procurement unabated despite high prices',
+    whyCn:'超大规模云厂商AI训练需求持续爆发，采购不减速',
+    investEn:'[Analysis] NVDA near-term momentum continues but valuation fully prices optimism (P/E >50x). Supply chain beneficiaries: TSM. Watch export control impact on China revenue.',
+    investCn:'[推断] NVDA短期动能延续，但估值已充分定价乐观预期。供应链受益标的：台积电ADR。注意出口管制对中国市场营收影响。',
+    geoEn:'[Analysis] Blackwell Ultra restricted to allied markets; China receives downgraded H20. Compute supply asymmetry reinforces US AI capability lead.',
+    geoCn:'[推断] Blackwell Ultra仅供美国盟友市场，中国继续获得降规版H20。算力供给不对等格局固化。',
+    careerEn:'[Analysis] NVIDIA ecosystem engineer demand surges: CUDA architects, MLOps, inference optimisation specialists. Toronto/Montreal AI cluster salaries follow.',
+    careerCn:'[推断] NVIDIA生态工程师需求暴增。多伦多/蒙特利尔AI集群薪资跟涨。'
+  },
+  {
+    rank:4, sourceTier:'T1',
+    source:"Cabinet Office of Japan", sourceCn:'日本内阁府/首相官邸',
+    sourceUrl:'https://www.kantei.go.jp',
+    topic:'geo', confidence:'HIGH', newsDate:'2026-03-24', isMajorUpdate:false, updateNote:'',
+    headlineEn:"Japan Cabinet amends National Security Strategy: AI and semiconductors designated core strategic assets",
+    headlineCn:'日本内阁批准新版《国家安全战略》补充条款，明确AI与半导体为核心战略资产',
+    whoEn:"PM Shigeru Ishiba, National Security Council", whoCn:'日本首相石破茂，国家安全保障会议',
+    whatEn:"Amendment places AI infrastructure and advanced semiconductors under Economic Security Promotion Act; authorises foreign acquisition reviews",
+    whatCn:'补充条款将AI基础设施和先进半导体列入经济安全保障法保护范围',
+    whenEn:'March 24, 2026, Cabinet meeting', whenCn:'2026年3月24日，内阁会议',
+    whereEn:"Tokyo, Prime Minister's Office", whereCn:'东京，首相官邸',
+    whyEn:'Aligned with US-Japan-India-Australia Quad framework to build regional semiconductor supply chain security',
+    whyCn:'配合美日印澳Quad框架，构建区域半导体供应链安全网',
+    investEn:'[Analysis] Japanese semiconductor localisation tailwinds continue: Tokyo Electron, Shin-Etsu, Disco benefit. Watch Rapidus investment window.',
+    investCn:'[推断] 日本半导体国产化政策红利延续：东京电子、信越化学、迪思科等受益。关注Rapidus投资窗口。',
+    geoEn:'[Analysis] US-Japan tech alliance deepens; Japan becomes key node in US export control enforcement. South Korea faces pressure to enact similar legislation.',
+    geoCn:'[推断] 美日同盟科技维度深化。韩国面临跟进类似立法的压力。',
+    careerEn:'[Analysis] Demand rises for bilingual (English+Japanese) engineers in Japan tech/semiconductor sector.',
+    careerCn:'[推断] 日本科技/半导体行业对英语+日语双语工程师需求上升。'
+  },
+  {
+    rank:5, sourceTier:'T2',
+    source:'Apple Newsroom', sourceCn:'苹果公司官方新闻稿',
+    sourceUrl:'https://www.apple.com/newsroom',
+    topic:'tech', confidence:'HIGH', newsDate:'2026-03-23', isMajorUpdate:false, updateNote:'',
+    headlineEn:'Apple announces $500B US investment: new AI server factory in Texas, expanded TSMC Arizona procurement',
+    headlineCn:'苹果公司宣布在美国投入5000亿美元，新建AI服务器工厂',
+    whoEn:'Apple CEO Tim Cook', whoCn:'苹果CEO蒂姆·库克',
+    whatEn:'Official press release confirms: new AI server assembly plant in Texas; commitment to 20,000 US manufacturing jobs over 4 years',
+    whatCn:'官方新闻稿确认：在德克萨斯州新建AI服务器组装厂，承诺4年内创造20,000个制造业岗位',
+    whenEn:'March 23, 2026, official release', whenCn:'2026年3月23日官方发布',
+    whereEn:'Cupertino HQ / Texas (new plant)', whereCn:'库比蒂诺总部 / 德克萨斯州新厂',
+    whyEn:'Response to Trump administration reshoring pressure; securing autonomous AI infrastructure supply chain',
+    whyCn:'回应特朗普政府制造业回流要求，同时锁定AI基础设施自主供应链',
+    investEn:'[Analysis] Apple domestic manufacturing secures supply chain; medium-term bullish for services revenue via Apple Intelligence monetisation. Upstream beneficiaries: Broadcom (ASIC), KLA.',
+    investCn:'[推断] 苹果国内制造锁定供应链安全，中长期利好服务营收。上游受益：博通、科磊。',
+    geoEn:'[Analysis] Apple commitment sets template for Big Tech tariff negotiations. TSMC US capacity acceleration further reduces Taiwan geopolitical risk exposure.',
+    geoCn:'[推断] 苹果承诺代表大型科技公司与特朗普政府关税谈判的范本。台积电美国产能加速。',
+    careerEn:'[Analysis] Texas factory creates manufacturing roles, not high-end engineering. Apple Intelligence platform expansion drives demand for AI PMs and ML engineers.',
+    careerCn:'[推断] 德克萨斯新厂创造的是制造业岗位。但Apple Intelligence扩张带动AI产品经理和ML工程师需求增长。'
+  },
+  {
+    rank:6, sourceTier:'T3',
+    source:'Reuters', sourceCn:'路透社',
+    sourceUrl:'https://www.reuters.com',
+    topic:'geo', confidence:'MED', newsDate:'2026-03-25', isMajorUpdate:false, updateNote:'',
+    headlineEn:'Reuters exclusive: US plans to add 50 Chinese AI firms to Entity List, including LLM developers',
+    headlineCn:'路透独家：美国拟将50家中国AI企业列入实体清单',
+    whoEn:'US Bureau of Industry and Security (BIS), sources cited by Reuters',
+    whoCn:'美国商务部工业与安全局，路透援引知情人士',
+    whatEn:'Sources say new Entity List expansion targets LLM training, AI chip design, and autonomous driving companies',
+    whatCn:'据知情人士，新一轮清单针对大语言模型训练、AI芯片设计和自动驾驶企业',
+    whenEn:'March 25, 2026 (reported; announcement reportedly imminent)', whenCn:'2026年3月25日报道，公布时间最快本月',
+    whereEn:'Washington D.C.', whereCn:'华盛顿特区',
+    whyEn:'Continuation and escalation of bipartisan US-China technology control framework',
+    whyCn:'拜登-特朗普两届政府延续的对华科技管制框架升级',
+    investEn:'[Analysis · T3, pending official confirmation] If confirmed, A-share AI faces short-term pressure; HK tech stocks face volatility. Domestic alternatives benefit.',
+    investCn:'[推断·T3来源，待官方确认] 消息落实后，A股AI板块短期承压，港股相关科技股波动加剧。国内替代方案受益。',
+    geoEn:'[Analysis] Entity List expansion accelerates full isolation of Chinese AI ecosystem from the West. European companies forced to choose sides.',
+    geoCn:'[推断] 实体清单扩围将加速中国AI生态圈与西方的隔离。欧洲企业被迫在两个技术阵营间选边。',
+    careerEn:'[Analysis] Career risk rises for engineers at Entity Listed companies (US visa/status implications). AI export control compliance lawyer demand surges.',
+    careerCn:'[推断] 在实体清单企业就职的工程师职业风险上升。AI出口管制合规律师需求激增。'
+  },
+  {
+    rank:7, sourceTier:'T1',
+    source:"People's Bank of China", sourceCn:'中国人民银行',
+    sourceUrl:'http://www.pbc.gov.cn',
+    topic:'macro', confidence:'HIGH', newsDate:'2026-03-24', isMajorUpdate:false, updateNote:'',
+    headlineEn:'PBOC cuts reserve requirement ratio 0.5pp, releasing ~¥1.1 trillion in long-term liquidity',
+    headlineCn:'中国人民银行下调存款准备金率0.5个百分点，释放约1.1万亿元流动性',
+    whoEn:"People's Bank of China", whoCn:'中国人民银行',
+    whatEn:'Official announcement: broad-based RRR cut of 0.5pp; relending rates also cut to support tech innovation and green development',
+    whatCn:'官网公告：全面降准0.5个百分点，下调再贷款利率支持科技创新和绿色发展',
+    whenEn:'March 24, 2026, official announcement (effective next month)', whenCn:'2026年3月24日官方公告，下月起实施',
+    whereEn:'Beijing, China', whereCn:'北京',
+    whyEn:'Domestic demand weak; property market still adjusting; monetary easing needed alongside fiscal stimulus',
+    whyCn:'内需偏弱、房地产仍处调整期，需货币宽松配合财政刺激',
+    investEn:'[Analysis] CNY faces short-term pressure; A-share banks/property see limited benefit. HK H-share liquidity improves; watch Hang Seng Tech.',
+    investCn:'[推断] 人民币短期承压，A股银行/地产受益有限。港股H股流动性改善，关注恒生科技指数。',
+    geoEn:'[Analysis] Easing cycle diverges from Fed hold, widening US-China rate differential. May accelerate capital outflow; PBOC FX tools likely deployed.',
+    geoCn:'[推断] 宽松周期与美联储"按兵不动"形成政策背离，中美利差扩大。',
+    careerEn:'[Analysis] Relending support benefits domestic AI/semiconductor startup financing. Foreign tech in China sees slightly improved CNY cost competitiveness.',
+    careerCn:'[推断] 再贷款专项支持科技创新，利好国内AI/半导体初创公司融资。'
+  },
+  {
+    rank:8, sourceTier:'T2',
+    source:'Microsoft Official Blog', sourceCn:'微软官方博客',
+    sourceUrl:'https://blogs.microsoft.com',
+    topic:'career', confidence:'HIGH', newsDate:'2026-03-23', isMajorUpdate:false, updateNote:'',
+    headlineEn:'Microsoft cuts 6,000 jobs in traditional lines while adding 10,000 Azure AI and Copilot roles',
+    headlineCn:'微软裁员6000人，同时新增10000个AI基础设施和Copilot开发岗位',
+    whoEn:'Microsoft CEO Satya Nadella', whoCn:'微软CEO萨提亚·纳德拉',
+    whatEn:'Official blog: cutting Office sales and Xbox content staff; mass hiring for Azure AI engineers and Copilot product teams',
+    whatCn:'官方博客：削减传统业务线员工，大规模招聘Azure AI工程师和Copilot产品团队',
+    whenEn:'March 23, 2026, official statement', whenCn:'2026年3月23日官方声明',
+    whereEn:'Redmond, Washington State', whereCn:'华盛顿州雷德蒙德',
+    whyEn:'AI transformation efficiency drive; cloud AI marginal cost declining as compute scales',
+    whyCn:'AI转型效率提升，云AI业务边际成本随规模递减',
+    investEn:'[Analysis] Microsoft AI transformation on track; short-term MSFT positive. Long-term margin improvement thesis strengthened. Google/Amazon face similar structural pressure.',
+    investCn:'[推断] 微软AI转型效率提升符合预期，MSFT短期利好。长期利润率改善逻辑强化。',
+    geoEn:'[Analysis] Big Tech "AI replacement" narrative will trigger EU employment protection policy response, requiring stricter AI job impact assessments.',
+    geoCn:'[推断] 大型科技公司"AI换人"叙事将引发欧盟就业保护政策回应。',
+    careerEn:'[Analysis] Clearest market signal to pivot to AI: traditional software sales shrinking, Azure AI/Copilot roles exploding. Priority skills: Azure AI Studio, LangChain, Copilot plugins.',
+    careerCn:'[推断] 这是转行AI最直接的市场信号：传统软件销售岗位萎缩，Azure AI/Copilot开发岗位爆发。建议优先学习：Azure AI Studio、LangChain、Copilot插件开发。'
+  },
+  {
+    rank:9, sourceTier:'T2',
+    source:'OpenAI Official Blog', sourceCn:'OpenAI官方博客',
+    sourceUrl:'https://openai.com/blog',
+    topic:'tech', confidence:'HIGH', newsDate:'2026-03-22', isMajorUpdate:false, updateNote:'',
+    headlineEn:'OpenAI releases GPT-5: enterprise API pricing cut 40% vs GPT-4o, reasoning capabilities significantly improved',
+    headlineCn:'OpenAI正式发布GPT-5，企业API定价较GPT-4o下调40%',
+    whoEn:'OpenAI CEO Sam Altman', whoCn:'OpenAI CEO山姆·奥特曼',
+    whatEn:'Official blog: GPT-5 surpasses predecessor on MMLU, GPQA, HumanEval; 128K context; o1 reasoning integrated',
+    whatCn:'官方博客：GPT-5在MMLU、GPQA、HumanEval基准全面超越前代，支持128K上下文，整合o1推理',
+    whenEn:'March 22, 2026, official release', whenCn:'2026年3月22日正式发布',
+    whereEn:'San Francisco, California', whereCn:'加利福尼亚州旧金山',
+    whyEn:'Response to Anthropic Claude and Google Gemini competition; pricing cuts to expand enterprise market share',
+    whyCn:'应对Anthropic和Google竞争，降价扩大企业市场份额',
+    investEn:'[Analysis] 40% API price cut strongly bullish for AI application SaaS companies. Microsoft Copilot infrastructure costs fall. But price war pressures OpenAI profitability.',
+    investCn:'[推断] API价格下降40%，对以API调用为主要成本的AI应用公司（SaaS类）利好显著。但价格战对OpenAI自身盈利能力构成压力。',
+    geoEn:'[Analysis] Rapid frontier model price decline squeezes Chinese AI cost advantage. Export controls restrict API access in some markets.',
+    geoCn:'[推断] 前沿模型价格快速下降挤压中国AI企业的成本优势，但出口管制使API访问在某些市场受限。',
+    careerEn:'[Analysis] Prompt engineering roles further commoditised. High demand shifts to AI PMs and systems integration engineers who embed GPT-5 into vertical industry workflows.',
+    careerCn:'[推断] Prompt工程岗位进一步商品化。高需求转向：能将GPT-5能力嵌入垂直行业工作流的AI产品经理和系统集成工程师。'
+  },
+  {
+    rank:10, sourceTier:'T3',
+    source:'Bloomberg', sourceCn:'彭博社',
+    sourceUrl:'https://www.bloomberg.com',
+    topic:'macro', confidence:'MED', newsDate:'2026-03-25', isMajorUpdate:false, updateNote:'',
+    headlineEn:"Bloomberg: Toronto home prices fall for 5th consecutive month; AI worker outmigration emerges as variable",
+    headlineCn:'彭博：多伦多房价连续第5个月下跌，AI工作者外迁成新变量',
+    whoEn:'Statistics Canada, TRREB, Bloomberg economists', whoCn:'加拿大统计局，多伦多地产局TRREB',
+    whatEn:'GTA average price down 1.8% MoM in March; tech workers relocating to Calgary and Halifax via remote work',
+    whatCn:'3月大多伦多地区均价环比下跌1.8%，部分科技工作者因远程办公迁往卡尔加里和哈利法克斯',
+    whenEn:'March 2026 data (reported March 25)', whenCn:'2026年3月数据（3月25日报道）',
+    whereEn:'Greater Toronto Area, Canada', whereCn:'大多伦多地区',
+    whyEn:'High rate cycle combined with tech layoffs; buyer wait-and-see sentiment persists',
+    whyCn:'高利率周期叠加科技行业裁员，买方观望情绪延续',
+    investEn:'[Analysis · T3] Toronto real estate REITs face short-term pressure. If Fed cuts Q4, Bank of Canada likely follows; mortgage relief would reactivate buyers.',
+    investCn:'[推断·T3] 多伦多房地产REITs短期承压。若美联储Q4降息，加拿大央行可能同步，按揭成本下降将重新激活买盘。',
+    geoEn:'[Analysis] Canadian tech talent redistribution across cities signals softening of Toronto AI hub advantage; Calgary/Victoria increasing tech park investment.',
+    geoCn:'[推断] 加拿大科技人才在城市间重新分配，多伦多AI中心竞争优势有所软化。',
+    careerEn:'[Analysis] For AI practitioners in Toronto: remote work offers housing cost arbitrage. But Toronto AI ecosystem density remains highest in Canada — proximity has network effect value.',
+    careerCn:'[推断] 对在多伦多的AI从业者：远程工作可提供住房成本套利机会。但多伦多AI生态密度仍是加拿大最高，放弃proximity有网络效应代价。'
+  }
+  ];
+  return all.slice(0, parseInt(cnt)||7);
+}
+</script>
+</body>
+</html>
