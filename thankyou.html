@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelligence Digest</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0c0d0e;
+    color: #dedad2;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    text-align: center;
+    padding: 48px 40px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: #131416;
+    max-width: 360px;
+    width: 90%;
+  }
+  .icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+    display: block;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 400;
+    color: #dedad2;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+  }
+  p {
+    font-size: 14px;
+    color: #6a6865;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .bar-wrap {
+    height: 2px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar {
+    height: 100%;
+    background: #c8a96e;
+    border-radius: 2px;
+    animation: drain 3s linear forwards;
+  }
+  .countdown {
+    font-size: 11px;
+    color: #4a4946;
+    margin-top: 10px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.06em;
+  }
+  @keyframes drain {
+    from { width: 100%; }
+    to   { width: 0%; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="icon" id="icon">👍</span>
+  <h1 id="title">Thank you for your feedback!</h1>
+  <p id="msg">Your response has been recorded.<br>This window will close automatically.</p>
+  <div class="bar-wrap"><div class="bar"></div></div>
+  <div class="countdown" id="cd">Closing in 3s…</div>
+</div>
+
+<script>
+  // ── Read URL params ──────────────────────────────────────────────
+  const params  = new URLSearchParams(window.location.search);
+  const rating  = params.get('rating') || 'useful';
+  const date    = params.get('date')   || new Date().toISOString().slice(0, 10);
+
+  // ── Adjust copy based on rating ──────────────────────────────────
+  if (rating === 'not_relevant') {
+    document.getElementById('icon').textContent  = '👎';
+    document.getElementById('title').textContent = 'Noted — thanks!';
+    document.getElementById('msg').textContent   = "We'll work on making the digest more relevant.\nThis window will close automatically.";
+  }
+
+  // ── Silently submit to Google Form ──────────────────────────────
+  // Replace these three values with your real IDs (same as in news_agent_v3.html)
+  const FORM_ID      = '1FAIpQLScN3lYHkYmg0tdXkPi9ofkhUKcIqdf2HTa5J6N2j9t-0Ov8zQ';
+  const ENTRY_DATE   = 'entry.763436474';
+  const ENTRY_RATING = 'entry.771339392';
+
+  const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`
+    + `?${ENTRY_DATE}=${encodeURIComponent(date)}`
+    + `&${ENTRY_RATING}=${encodeURIComponent(rating)}`
+    + `&submit=Submit`;
+
+  // fetch with no-cors — fire and forget, no redirect
+  fetch(submitUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+
+  // ── Countdown and close ──────────────────────────────────────────
+  let secs = 3;
+  const cdEl = document.getElementById('cd');
+  const timer = setInterval(() => {
+    secs--;
+    cdEl.textContent = secs > 0 ? `Closing in ${secs}s…` : 'Closing…';
+    if (secs <= 0) {
+      clearInterval(timer);
+      window.close();
+      // fallback if window.close() is blocked (e.g. not opened by script)
+      setTimeout(() => {
+        document.querySelector('.card').innerHTML =
+          '<span class="icon">✓</span><h1>You can close this tab.</h1>';
+      }, 400);
+    }
+  }, 1000);
+</script>
+</body>
+</html>

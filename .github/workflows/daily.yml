@@ -1,0 +1,41 @@
+name: Daily Intelligence Digest
+
+on:
+  schedule:
+    # 12:00 UTC = 07:00 EST (UTC-5, Nov–Mar) / 08:00 EDT (UTC-4, Mar–Nov)
+    # Closest fixed UTC time to 07:00 Toronto year-round
+    - cron: '0 12 * * *'
+  workflow_dispatch:   # allow manual trigger from GitHub Actions UI
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install anthropic resend
+
+      - name: Run agent
+        run: python phase2-mvp/agent.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          # Optional overrides:
+          # FROM_EMAIL:      ${{ secrets.FROM_EMAIL }}
+          # STORY_COUNT:     7
+
+      - name: Commit updated dedup history
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add phase2-mvp/dedup_history.json
+          git diff --staged --quiet || git commit -m "chore: update dedup history [skip ci]"
+          git push
