@@ -254,17 +254,17 @@ def build_email_html(items: list, today: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intelligence Digest · {today}</title>
 </head>
-<body style="background:#0c0d0e;color:#dedad2;font-family:Georgia,serif;
-             max-width:700px;margin:0 auto;padding:24px 20px;font-size:14px">
+<body style="background:#22252a;color:#e8e4dc;font-family:Georgia,serif;
+             max-width:700px;margin:0 auto;padding:24px 20px;font-size:15px">
 
-<div style="border-bottom:1px solid #2a2a2a;padding-bottom:18px;margin-bottom:28px">
-  <div style="font-size:22px;color:#c8a96e;letter-spacing:0.06em;font-family:Georgia,serif">
+<div style="border-bottom:1px solid #363a40;padding-bottom:18px;margin-bottom:28px">
+  <div style="font-size:24px;color:#c8a96e;letter-spacing:0.06em;font-family:Georgia,serif">
     Intelligence Digest
   </div>
-  <div style="font-size:11px;color:#4a4946;letter-spacing:0.16em;margin-top:4px;font-family:serif">
+  <div style="font-size:12px;color:#7a7875;letter-spacing:0.16em;margin-top:4px;font-family:serif">
     今日情报简报
   </div>
-  <div style="font-size:11px;color:#4a4946;margin-top:8px;font-family:monospace">
+  <div style="font-size:12px;color:#7a7875;margin-top:8px;font-family:monospace">
     {today} · {len(items)} stories · AI/Tech · Geopolitics · Macro · Career · Bilingual EN/CN
   </div>
 </div>
@@ -306,8 +306,8 @@ def build_email_html(items: list, today: str) -> str:
                 f'<span style="background:rgba(0,0,0,0.3);color:{tag_color};'
                 f'padding:2px 8px;border-radius:3px;font-size:10px;font-family:monospace">'
                 f'{tag_en} · {tag_cn}</span><br>'
-                f'<span style="color:#c8c8c0;font-size:13px">{text_en}</span><br>'
-                f'<span style="color:#6a6865;font-size:11px">{text_cn}</span>'
+                f'<span style="color:#dedad2;font-size:14px">{text_en}</span><br>'
+                f'<span style="color:#9a9890;font-size:12px">{text_cn}</span>'
                 f'</div>'
             )
 
@@ -332,56 +332,56 @@ def build_email_html(items: list, today: str) -> str:
         )
 
         parts.append(f"""
-<div style="border:1px solid #1e2023;border-radius:8px;margin-bottom:18px;
-            overflow:hidden;background:#131416">
+<div style="border:1px solid #363a40;border-radius:8px;margin-bottom:18px;
+            overflow:hidden;background:#2c3038">
 
   <!-- card header -->
   <div style="padding:18px 20px 0">
-    <div style="font-size:11px;color:#4a4946;font-family:monospace;margin-bottom:10px">
+    <div style="font-size:12px;color:#7a7875;font-family:monospace;margin-bottom:10px">
       #{i} &nbsp;
       <span style="background:rgba(200,169,110,0.1);color:{tier_color};
                    border:1px solid rgba(200,169,110,0.2);padding:1px 5px;
-                   border-radius:3px;font-size:9px">{tier}</span>
+                   border-radius:3px;font-size:10px">{tier}</span>
       &nbsp;{it.get('source', it.get('sourceCn', ''))} · {topic_label} · {confidence}{date_str}{major_badge}
     </div>
 
     <!-- headline -->
-    <div style="font-size:17px;font-weight:400;line-height:1.5;margin-bottom:4px">
+    <div style="font-size:18px;font-weight:400;line-height:1.5;margin-bottom:4px">
       {headline_link}
     </div>
-    <div style="font-size:13px;color:#8a8880;font-family:serif;margin-bottom:4px">
+    <div style="font-size:14px;color:#9a9890;font-family:serif;margin-bottom:4px">
       {headline_cn}
     </div>
     {update_note_html}
   </div>
 
-  <!-- 5W table -->
-  <div style="padding:14px 20px">
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <tr>
-        <td style="width:50%;padding-right:12px;vertical-align:top">
-          <div style="color:#4a4946;font-size:10px;font-family:monospace;margin-bottom:6px">English · 5W</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">WHO</span>{it.get('whoEn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">WHAT</span>{it.get('whatEn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">WHEN</span>{it.get('whenEn','—')}{date_str}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">WHERE</span>{it.get('whereEn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">WHY</span>{it.get('whyEn','—')}</div>
-        </td>
-        <td style="width:50%;padding-left:12px;border-left:1px solid #1e2023;vertical-align:top">
-          <div style="color:#4a4946;font-size:10px;font-family:monospace;margin-bottom:6px">中文 · 五要素</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">何人</span>{it.get('whoCn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">何事</span>{it.get('whatCn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">何时</span>{it.get('whenCn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">何地</span>{it.get('whereCn','—')}</div>
-          <div style="margin-bottom:4px"><span style="color:#6a6865;display:inline-block;min-width:44px">为何</span>{it.get('whyCn','—')}</div>
-        </td>
-      </tr>
-    </table>
+  <!-- 5W stacked: English on top, Chinese below -->
+  <div style="padding:14px 20px;font-size:13px">
+
+    <!-- English block -->
+    <div style="color:#7a7875;font-size:11px;font-family:monospace;margin-bottom:6px">English · 5W</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHO</span>{it.get('whoEn','—')}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHAT</span>{it.get('whatEn','—')}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHEN</span>{it.get('whenEn','—')}{date_str}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHERE</span>{it.get('whereEn','—')}</div>
+    <div style="margin-bottom:14px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHY</span>{it.get('whyEn','—')}</div>
+
+    <!-- divider -->
+    <div style="border-top:1px solid #363a40;margin-bottom:12px"></div>
+
+    <!-- Chinese block -->
+    <div style="color:#7a7875;font-size:11px;font-family:monospace;margin-bottom:6px">中文 · 五要素</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">何人</span>{it.get('whoCn','—')}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">何事</span>{it.get('whatCn','—')}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">何时</span>{it.get('whenCn','—')}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">何地</span>{it.get('whereCn','—')}</div>
+    <div><span style="color:#7a7875;display:inline-block;min-width:52px">为何</span>{it.get('whyCn','—')}</div>
+
   </div>
 
   <!-- analysis section -->
-  <div style="background:#0c0d0e;padding:14px 20px;margin:0 0 0 0">
-    <div style="color:#4a4946;font-size:10px;font-family:monospace;margin-bottom:10px">
+  <div style="background:#22252a;padding:14px 20px">
+    <div style="color:#7a7875;font-size:11px;font-family:monospace;margin-bottom:10px">
       Analysis · 分析 &nbsp;(AI inference — not confirmed fact · AI推断，非确认事实)
     </div>
     {invest_block}
