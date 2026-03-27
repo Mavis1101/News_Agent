@@ -7,6 +7,7 @@ Flow:
   1. Load subscribers.json  (who to send to)
   2. Load dedup_history.json  (what was already sent)
   3. Call Claude API with web_search tool  (same prompt as v3_5.html)
+     — OR use demo data if DEMO=1 env var is set (skips API, free)
   4. Filter duplicates; update dedup_history.json
   5. Build HTML email  (same layout as v3_5.html → showEmail())
   6. Send via Resend to every subscriber
@@ -16,8 +17,9 @@ Required env vars:
   RESEND_API_KEY
 
 Optional env vars:
-  FROM_EMAIL   (default: digest@yourdomain.com — change before first send)
+  FROM_EMAIL   (default: onboarding@resend.dev)
   STORY_COUNT  (default: 7)
+  DEMO         (set to "1" to skip Claude API and use hardcoded demo data)
 """
 
 import json
@@ -156,13 +158,76 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
     raw = "".join(
         block.text for block in response.content if hasattr(block, "text")
     )
+    print(f"  Raw response length: {len(raw)} chars")
 
-    # Extract JSON array
-    match = re.search(r"\[[\s\S]*\]", raw)
-    if not match:
-        raise ValueError(f"No JSON array found in API response. Preview: {raw[:400]}")
+    # Extract JSON array — find first '[' to last ']'
+    start = raw.find("[")
+    end   = raw.rfind("]")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(f"No JSON array found. Raw preview:\n{raw[:600]}")
 
-    return json.loads(match.group(0))
+    json_str = raw[start:end + 1]
+
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        # Log context around the error so we can diagnose
+        ctx_start = max(0, e.pos - 120)
+        ctx_end   = min(len(json_str), e.pos + 120)
+        print(f"  JSON parse error: {e.msg} at pos {e.pos}")
+        print(f"  Context: ...{json_str[ctx_start:ctx_end]}...")
+        raise ValueError(f"JSON parse failed: {e.msg} at pos {e.pos}")
+
+
+# ── demo data (used when DEMO=1, no API call) ─────────────────────────────────
+def demo_news() -> list:
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return [
+        {
+            "rank": 1, "sourceTier": "T1",
+            "source": "Federal Reserve", "sourceCn": "美联储",
+            "sourceUrl": "https://www.federalreserve.gov/newsevents/pressreleases.htm",
+            "topic": "macro", "confidence": "HIGH",
+            "newsDate": today, "isMajorUpdate": False, "updateNote": "",
+            "headlineEn": "Fed holds rates steady; signals cuts pushed to Q4 2026",
+            "headlineCn": "美联储维持利率不变，暗示降息推迟至Q4",
+            "whoEn": "Fed Chair Jerome Powell, FOMC", "whoCn": "美联储主席鲍威尔",
+            "whatEn": "Post-meeting statement holds federal funds rate unchanged",
+            "whatCn": "会后声明维持利率不变",
+            "whenEn": f"{today}, FOMC meeting", "whenCn": f"{today} FOMC会议",
+            "whereEn": "Washington D.C.", "whereCn": "华盛顿特区",
+            "whyEn": "Services inflation stickier than expected",
+            "whyCn": "服务业通胀韧性超预期",
+            "investEn": "[Analysis] Dollar strengthens short-term; rate-sensitive growth stocks face headwinds.",
+            "investCn": "[分析] 美元短期走强，利率敏感型成长股承压。",
+            "geoEn": "[Analysis] Sustained high rates reinforce dollar dominance.",
+            "geoCn": "[分析] 高利率延续强化美元霸权。",
+            "careerEn": "[Analysis] FinTech funding conditions remain tight.",
+            "careerCn": "[分析] 金融科技融资环境持续收紧。",
+        },
+        {
+            "rank": 2, "sourceTier": "T2",
+            "source": "NVIDIA IR", "sourceCn": "英伟达投资者关系",
+            "sourceUrl": "https://investor.nvidia.com/news-releases/news-release-details/",
+            "topic": "tech", "confidence": "HIGH",
+            "newsDate": today, "isMajorUpdate": False, "updateNote": "",
+            "headlineEn": "NVIDIA announces next-gen Blackwell Ultra GPU for data centres",
+            "headlineCn": "英伟达发布下一代Blackwell Ultra数据中心GPU",
+            "whoEn": "NVIDIA CEO Jensen Huang", "whoCn": "英伟达CEO黄仁勋",
+            "whatEn": "Unveiled Blackwell Ultra GPU with 2× the memory bandwidth of predecessor",
+            "whatCn": "发布Blackwell Ultra GPU，内存带宽是上代两倍",
+            "whenEn": f"{today}, GTC Conference", "whenCn": f"{today} GTC大会",
+            "whereEn": "San Jose, California", "whereCn": "加州圣何塞",
+            "whyEn": "Surging demand for AI training infrastructure",
+            "whyCn": "AI训练基础设施需求激增",
+            "investEn": "[Analysis] NVDA supply chain beneficiaries: TSMC, SK Hynix. Competitors face widening moat.",
+            "investCn": "[分析] 英伟达供应链受益：台积电、SK海力士。竞争对手护城河差距扩大。",
+            "geoEn": "[Analysis] US chip export controls likely to tighten around Blackwell Ultra.",
+            "geoCn": "[分析] 美国芯片出口管制可能围绕Blackwell Ultra进一步收紧。",
+            "careerEn": "[Analysis] Strong demand for CUDA engineers and AI infrastructure roles.",
+            "careerCn": "[分析] CUDA工程师和AI基础设施岗位需求强劲。",
+        },
+    ]
 
 
 # ── email HTML builder ─────────────────────────────────────────────────────────
@@ -399,13 +464,17 @@ def main():
     # Prepare dedup context (last DEDUP_MAX keys)
     recent_keys = list(dedup.keys())[-DEDUP_MAX:]
 
-    # Fetch news from Claude
-    print(f"  Fetching {STORY_COUNT} stories via Claude API + web search…")
-    try:
-        raw_items = fetch_news(recent_keys)
-    except Exception as exc:
-        print(f"  ERROR: {exc}")
-        sys.exit(1)
+    # Fetch news — real API or demo mode
+    if os.environ.get("DEMO") == "1":
+        print("  [DEMO MODE] Skipping Claude API — using hardcoded demo data")
+        raw_items = demo_news()
+    else:
+        print(f"  Fetching {STORY_COUNT} stories via Claude API + web search…")
+        try:
+            raw_items = fetch_news(recent_keys)
+        except Exception as exc:
+            print(f"  ERROR: {exc}")
+            sys.exit(1)
     print(f"  Received {len(raw_items)} stories")
 
     # Apply dedup filter
