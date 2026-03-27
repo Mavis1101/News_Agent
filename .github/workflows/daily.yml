@@ -30,7 +30,6 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
-          DEMO: "1"          # ← TESTING: remove this line when ready for real news
 
       - name: Commit updated dedup history
         run: |

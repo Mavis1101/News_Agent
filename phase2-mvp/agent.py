@@ -42,7 +42,7 @@ DEDUP_MAX        = 40
 MODEL       = "claude-sonnet-4-20250514"
 TOPICS      = "AI/High-tech, Geopolitics, Macro/Markets, Career/AI pivot, Policy/Regulation"
 STORY_COUNT = int(os.environ.get("STORY_COUNT", "7"))
-FROM_EMAIL  = os.environ.get("FROM_EMAIL", "onboarding@resend.dev")
+FROM_EMAIL  = os.environ.get("FROM_EMAIL", "digest@lensignal.com")
 
 TOPIC_LABEL = {
     "tech":   "AI/Tech",
