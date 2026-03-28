@@ -180,7 +180,10 @@ def _parse_json_array(raw: str) -> list:
 
 # ── Claude API call ────────────────────────────────────────────────────────────
 def fetch_news(recent_keys: list) -> list:
-    today     = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from datetime import timedelta
+    now       = datetime.now(timezone.utc)
+    today     = now.strftime("%Y-%m-%d")
+    yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
     keys_str  = ", ".join(recent_keys) if recent_keys else "none"
 
     SYS = f"""You are an elite intelligence analyst. Your task is to find today's most important news and return a strict JSON array — bilingual English + Chinese — with English as the primary language.
@@ -197,6 +200,13 @@ Rules:
 - sourceUrl must be the original official URL, not an aggregator.
 - newsDate must be the actual publication/announcement date in YYYY-MM-DD format.
 - isMajorUpdate: set true ONLY if this story is a significant new development on a previously known topic (e.g. policy announced before, now signed into law). Otherwise false.
+
+FRESHNESS REQUIREMENT (mandatory):
+- ONLY include stories where newsDate is {today} OR {yesterday}.
+- The event or announcement itself must have occurred within the last 24 hours — not merely been reported today.
+- If a story's underlying event happened more than 24 hours ago, EXCLUDE it even if it appeared in today's search results.
+- When in doubt about a story's date, search explicitly for the publication/announcement timestamp before including it.
+- Stories older than 24 hours must be REJECTED, no exceptions.
 
 DEDUPLICATION: The following story keys were already sent recently — do NOT include them unless isMajorUpdate is true:
 {keys_str}
@@ -236,10 +246,12 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
 }}"""
 
     USER = (
-        f"Search for the {STORY_COUNT} most important news stories from the last 24 hours "
+        f"Today is {today}. Search for the {STORY_COUNT} most important news stories "
+        f"published or announced between {yesterday} and {today} (last 24 hours only) "
         f"on topics: {TOPICS}.\n"
         f"Focus on: AI/semiconductors, US-China relations, geopolitics, macro, tech policy.\n"
-        f"Today's date: {today}. Include the exact newsDate for each story.\n"
+        f"STRICT RULE: Every story's newsDate must be {yesterday} or {today}. "
+        f"Reject any story whose underlying event occurred before {yesterday}.\n"
         f"Prioritise T1 (government/central bank official) and T2 (major corporate official) sources.\n"
         f"Return complete JSON array only."
     )
@@ -380,7 +392,7 @@ def build_email_html(items: list, today: str) -> str:
     今日情报简报
   </div>
   <div style="font-size:12px;color:#7a7875;margin-top:8px;font-family:monospace">
-    {today} · {len(items)} stories · AI/Tech · Geopolitics · Macro · Career · Bilingual EN/CN
+    {today} · {len(items)} stories · AI/Tech · Geopolitics · Macro · Career
   </div>
 </div>
 """)
@@ -477,7 +489,7 @@ def build_email_html(items: list, today: str) -> str:
     <div style="color:#7a7875;font-size:11px;font-family:monospace;margin-bottom:6px">English · 5W</div>
     <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHO</span>{it.get('whoEn','—')}</div>
     <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHAT</span>{it.get('whatEn','—')}</div>
-    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHEN</span>{it.get('whenEn','—')}{date_str}</div>
+    <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHEN</span>{it.get('whenEn','—')}</div>
     <div style="margin-bottom:5px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHERE</span>{it.get('whereEn','—')}</div>
     <div style="margin-bottom:14px"><span style="color:#7a7875;display:inline-block;min-width:52px">WHY</span>{it.get('whyEn','—')}</div>
 
@@ -497,7 +509,7 @@ def build_email_html(items: list, today: str) -> str:
   <!-- analysis section -->
   <div style="background:#22252a;padding:14px 20px">
     <div style="color:#7a7875;font-size:11px;font-family:monospace;margin-bottom:10px">
-      Analysis · 分析 &nbsp;(AI inference — not confirmed fact · AI推断，非确认事实)
+      Analysis · 分析
     </div>
     {invest_block}
     {geo_block}
@@ -528,10 +540,9 @@ def build_email_html(items: list, today: str) -> str:
               border-radius:6px;color:#d4943a;text-decoration:none;
               font-size:13px;font-family:Georgia,serif">⚑ Report an issue</a>
   </div>
-  <p style="font-size:11px;color:#444;font-family:Georgia,serif">
-    Analysis sections are AI inference — not confirmed fact.
-    Always verify before making decisions.<br>
-    分析部分为AI推断，非确认事实。<br><br>
+  <p style="font-size:11px;color:#555;font-family:Georgia,serif">
+    Analysis sections are AI inference — not confirmed fact. Always verify before making decisions.<br>
+    分析部分为AI推断，非确认事实。请在做出决策前自行核实。<br><br>
     <a href="{open_unsub}"
        style="color:#444;text-decoration:underline;font-size:11px">Unsubscribe</a>
   </p>
@@ -607,6 +618,10 @@ def main():
         filtered.append(it)
 
     items = filtered if filtered else raw_items   # fallback: send all if all duped
+
+    # Sort by source tier T1 → T2 → T3 → T4
+    tier_order = {"T1": 0, "T2": 1, "T3": 2, "T4": 3}
+    items.sort(key=lambda x: tier_order.get(x.get("sourceTier", "T4"), 3))
     print(f"  After dedup   : {len(items)} stories")
 
     # Trim dedup history
