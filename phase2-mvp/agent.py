@@ -84,6 +84,100 @@ def save_json(path: Path, data) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# ── JSON repair helpers ────────────────────────────────────────────────────────
+def _repair_json_quotes(json_str: str) -> str:
+    """
+    Fix the most common LLM JSON error: unescaped ASCII double-quote characters
+    inside string values (e.g. Chinese text with "word" emphasis breaks parsing).
+
+    Strategy: walk the JSON character-by-character tracking whether we are inside
+    a string.  When we hit a '"' inside a string, look ahead at the next
+    non-whitespace character; if it is NOT one of the JSON structural characters
+    ( : , } ] ) the quote must be an interior/inline quote — escape it.
+    """
+    result: list[str] = []
+    i = 0
+    n = len(json_str)
+
+    while i < n:
+        c = json_str[i]
+
+        # ── outside a string ──────────────────────────────────────────────────
+        if c != '"':
+            result.append(c)
+            i += 1
+            continue
+
+        # ── start of a JSON string ────────────────────────────────────────────
+        result.append('"')
+        i += 1
+
+        while i < n:
+            c = json_str[i]
+
+            if c == '\\':
+                # Already-escaped sequence — copy both chars unchanged
+                result.append(c)
+                i += 1
+                if i < n:
+                    result.append(json_str[i])
+                    i += 1
+                continue
+
+            if c == '"':
+                # Peek at the next non-whitespace character
+                j = i + 1
+                while j < n and json_str[j] in ' \t\n\r':
+                    j += 1
+                next_sig = json_str[j] if j < n else ''
+
+                if next_sig in (':',  ',', '}', ']'):
+                    # Legitimate end-of-string delimiter
+                    result.append('"')
+                    i += 1
+                    break  # back to outer loop
+                else:
+                    # Interior quote — escape it
+                    result.append('\\"')
+                    i += 1
+                continue
+
+            result.append(c)
+            i += 1
+
+    return ''.join(result)
+
+
+def _parse_json_array(raw: str) -> list:
+    """Extract and parse a JSON array from raw text, with repair fallback."""
+    start = raw.find('[')
+    end   = raw.rfind(']')
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(f"No JSON array found in response. Preview:\n{raw[:400]}")
+
+    json_str = raw[start:end + 1]
+
+    # First attempt — standard parse
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        ctx_start = max(0, e.pos - 120)
+        ctx_end   = min(len(json_str), e.pos + 120)
+        print(f"  JSON parse error: {e.msg} at pos {e.pos}")
+        print(f"  Context: ...{json_str[ctx_start:ctx_end]}...")
+
+    # Second attempt — repair unescaped interior quotes
+    print("  Attempting inline JSON repair…")
+    repaired = _repair_json_quotes(json_str)
+    try:
+        result = json.loads(repaired)
+        print("  Inline repair succeeded.")
+        return result
+    except json.JSONDecodeError as e2:
+        print(f"  Inline repair also failed: {e2.msg} at pos {e2.pos}")
+        raise ValueError(f"JSON parse failed after repair: {e2.msg} at pos {e2.pos}")
+
+
 # ── Claude API call ────────────────────────────────────────────────────────────
 def fetch_news(recent_keys: list) -> list:
     today     = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -106,6 +200,13 @@ Rules:
 
 DEDUPLICATION: The following story keys were already sent recently — do NOT include them unless isMajorUpdate is true:
 {keys_str}
+
+CRITICAL JSON RULES — MUST FOLLOW:
+- NEVER use ASCII double-quote characters (") inside any string value. They break JSON parsing.
+- For quoted words/phrases inside Chinese strings use 「」or 『』brackets instead of "".
+- For quoted words/phrases inside English strings use single quotes ('word') instead of "word".
+- Every string value must be a single unbroken JSON string with NO unescaped double quotes inside it.
+- Do NOT truncate or abbreviate any field — complete every object fully before the closing bracket.
 
 OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanation. Each object:
 {{
@@ -147,7 +248,7 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
 
     response = client.beta.messages.create(
         model=MODEL,
-        max_tokens=8000,
+        max_tokens=16000,
         system=SYS,
         messages=[{"role": "user", "content": USER}],
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
@@ -160,23 +261,37 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
     )
     print(f"  Raw response length: {len(raw)} chars")
 
-    # Extract JSON array — find first '[' to last ']'
-    start = raw.find("[")
-    end   = raw.rfind("]")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError(f"No JSON array found. Raw preview:\n{raw[:600]}")
+    # Attempt 1 & 2: standard parse + inline repair
+    try:
+        return _parse_json_array(raw)
+    except ValueError as first_err:
+        pass
 
-    json_str = raw[start:end + 1]
+    # Attempt 3: ask Claude (no web search, cheap) to return corrected JSON
+    print("  Falling back to Claude JSON-repair call…")
+    bad_json = raw[raw.find('['):raw.rfind(']') + 1] if '[' in raw else raw
+    fix_resp = client.messages.create(
+        model=MODEL,
+        max_tokens=16000,
+        messages=[{
+            "role": "user",
+            "content": (
+                "The following JSON array is malformed — it contains unescaped "
+                "double-quote characters inside string values. "
+                "Please fix every unescaped quote (replace with \\\" or with single "
+                "quotes / Chinese 「」 brackets as appropriate) and return ONLY the "
+                "corrected JSON array with no explanation.\n\n"
+                + bad_json
+            ),
+        }],
+    )
+    fixed_raw = fix_resp.content[0].text if fix_resp.content else ""
+    print(f"  Claude-repair response length: {len(fixed_raw)} chars")
 
     try:
-        return json.loads(json_str)
-    except json.JSONDecodeError as e:
-        # Log context around the error so we can diagnose
-        ctx_start = max(0, e.pos - 120)
-        ctx_end   = min(len(json_str), e.pos + 120)
-        print(f"  JSON parse error: {e.msg} at pos {e.pos}")
-        print(f"  Context: ...{json_str[ctx_start:ctx_end]}...")
-        raise ValueError(f"JSON parse failed: {e.msg} at pos {e.pos}")
+        return _parse_json_array(fixed_raw)
+    except ValueError as final_err:
+        raise ValueError(f"All JSON parse attempts failed. Last error: {final_err}")
 
 
 # ── demo data (used when DEMO=1, no API call) ─────────────────────────────────

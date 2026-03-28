@@ -78,6 +78,7 @@
 | v3   | 英文为主语言；新闻日期字段；去重+重大更新机制；Like/Dislike/Escalate 反馈系统 |
 | v3.1 | 邮件反馈升级：👍 👎 → `thankyou.html` 中转页（静默提交 Google Form + 3秒自动关闭）；⚑ Report issue 和 Unsubscribe 保持 Google Form；所有链接 `target="_blank"` |
 | v3.5 | 合并 v3 浏览器端 Like/Dislike/Escalate 反馈 + v3.1 邮件反馈链接；当前主文件 `news_agent_v3_5.html` |
+| Phase 2 | `agent.py` 上线：服务端批量发送；邮件改版（背景调亮、字体放大、5W 英文上/中文下）；发件域名 `digest@lensignal.com`；DEMO 模式；dedup 持久化 |
 
 ---
 
@@ -91,6 +92,15 @@
 | 内容个性化 | 所有人收到同一份简报 | 先验证内容价值，再做个性化 |
 | 测试规模 | 5–20人（朋友圈） | 最小验证成本 |
 | 用户数据库 | 无 | 不需要注册/登录系统 |
+
+### 发件配置
+
+| 项目 | 配置 |
+|------|------|
+| 发件地址 | `digest@lensignal.com` |
+| 发件域名 | `lensignal.com`（Cloudflare DNS，Resend 已验证 ✅）|
+| DNS 记录 | DKIM + SPF (MX + TXT) + DMARC，均已添加 |
+| 调试模式 | 在 `daily.yml` 的 env 加 `DEMO: "1"` 可跳过 Claude API |
 
 ### 运行成本
 
@@ -129,7 +139,7 @@ UNSUB_ID     = '1FAIpQLSc5y-sjQt7f3w18bqQT2rUVRQ8Ef5mJ9fCmufKlmiKqYcEFHw'
 
 - Repo：`github.com/Mavis1101/News_Agent`（Public）
 - 线上地址：`https://mavis1101.github.io/News_Agent/thankyou.html`
-- `news_agent_v3.html` 中 `THANKYOU_BASE` 已指向该地址，无需再修改
+- `news_agent_v3_5.html` 和 `agent.py` 中 `THANKYOU_BASE` 已指向该地址，无需再修改
 
 **退订流程：**
 用户点 Unsubscribe → 填表单（邮箱 + 原因）→ 你在 Google Sheet 收到通知 → 手动从 `subscribers.json` 删除
@@ -156,7 +166,7 @@ subscribers.json      ← 手动维护的订阅者列表
 - 5W 事实 + 三维度分析
 - localhost 去重 + 反馈系统
 
-### Phase 2 — MVP 多用户验证（下一步）
+### Phase 2 ✅ MVP 多用户验证（已上线）
 **目标：让真实用户收到邮件并收集反馈**
 
 - [x] `subscribers.json`：手动维护订阅者列表
