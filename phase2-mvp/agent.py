@@ -40,16 +40,14 @@ DEDUP_MAX        = 40
 
 # ── config ─────────────────────────────────────────────────────────────────────
 MODEL       = "claude-sonnet-4-20250514"
-TOPICS      = "AI/High-tech, Geopolitics, Macro/Markets, Career/AI pivot, Policy/Regulation"
+TOPICS      = "AI/High-tech, Geopolitics, Macro/Markets/Policy"
 STORY_COUNT = int(os.environ.get("STORY_COUNT", "5"))
 FROM_EMAIL  = os.environ.get("FROM_EMAIL", "digest@lensignal.com")
 
 TOPIC_LABEL = {
     "tech":   "AI/Tech",
     "geo":    "Geopolitics",
-    "macro":  "Macro",
-    "career": "Career",
-    "policy": "Policy",
+    "macro":  "Macro/Policy",
 }
 
 TIER_COLOR = {
@@ -197,7 +195,7 @@ T4: Other media, blogs, opinion pieces — must note T4 in output, confidence ne
 Rules:
 - T4 sources: confidence MAX is MED, never HIGH.
 - If same event has T1/T2 source available, use that and ignore T4.
-- sourceUrl must be the original official URL, not an aggregator.
+- sourceUrl must be the best available URL from search results already retrieved — prefer official sources but do NOT perform additional searches to find a better URL.
 - newsDate must be the actual publication/announcement date in YYYY-MM-DD format.
 - isMajorUpdate: set true ONLY if this story is a significant new development on a previously known topic (e.g. policy announced before, now signed into law). Otherwise false.
 
@@ -205,7 +203,7 @@ FRESHNESS REQUIREMENT (mandatory):
 - ONLY include stories where newsDate is {today} OR {yesterday}.
 - The event or announcement itself must have occurred within the last 24 hours — not merely been reported today.
 - If a story's underlying event happened more than 24 hours ago, EXCLUDE it even if it appeared in today's search results.
-- When in doubt about a story's date, search explicitly for the publication/announcement timestamp before including it.
+- If you cannot confirm a story's date from the search results already retrieved, SKIP it — do not perform additional searches to verify dates.
 - Stories older than 24 hours must be REJECTED, no exceptions.
 
 DEDUPLICATION: The following story keys were already sent recently — do NOT include them unless isMajorUpdate is true:
@@ -225,7 +223,7 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
   "source": "Source name (English)",
   "sourceCn": "来源名称（中文）",
   "sourceUrl": "URL",
-  "topic": "tech"|"geo"|"macro"|"career"|"policy",
+  "topic": "tech"|"geo"|"macro",
   "confidence": "HIGH"|"MED"|"LOW",
   "newsDate": "YYYY-MM-DD",
   "isMajorUpdate": false,
@@ -392,7 +390,7 @@ def build_email_html(items: list, today: str) -> str:
     今日情报简报
   </div>
   <div style="font-size:12px;color:#7a7875;margin-top:8px;font-family:monospace">
-    {today} · {len(items)} stories · AI/Tech · Geopolitics · Macro · Career
+    {today} · {len(items)} stories · AI/Tech · Geopolitics · Macro
   </div>
 </div>
 """)
