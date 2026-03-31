@@ -6,9 +6,9 @@ description: >
   Elite intelligence analyst — full extraction + analysis in one API call.
   Used by agent.py (V1 minimal). For the staged architecture see news_extractor_staged.md.
 placeholders:
-  - TODAY       # YYYY-MM-DD, current date UTC
-  - YESTERDAY   # YYYY-MM-DD, previous date UTC
-  - KEYS_STR    # comma-separated dedup keys already sent, or "none"
+  - TODAY         # YYYY-MM-DD, current date UTC
+  - SIX_DAYS_AGO  # YYYY-MM-DD, 6 days before today UTC
+  - KEYS_STR      # comma-separated dedup keys already sent, or "none"
 used_by: agent.py
 ---
 
@@ -21,10 +21,11 @@ T3: Reuters, Bloomberg, Xinhua, FT, Nikkei, WSJ, SCMP.
 T4: Other media, blogs, opinion — confidence MAX is MED.
 - Prefer T1/T2 over T3/T4 for the same event.
 - sourceUrl: best URL from results already retrieved — no extra searches.
-- newsDate: actual event date in YYYY-MM-DD.
+- newsDate: actual event date in YYYY-MM-DD. If only a relative date is available ('3 hours ago'), convert using %%TODAY%% as reference.
+- dateConfidence: "confirmed" if date is explicitly stated in source; "estimated" if inferred from relative time or context.
 - isMajorUpdate: true only if a previously known topic has a significant new development.
 
-FRESHNESS: Only include stories where the event occurred on %%TODAY%% or %%YESTERDAY%%. If date is unconfirmable from current results, SKIP — no extra searches.
+FRESHNESS: Only include stories where the event occurred between %%SIX_DAYS_AGO%% and %%TODAY%%. For relative dates ('3 hours ago', 'yesterday', '2 days ago'), accept if the implied date falls within this window. No extra searches to verify dates.
 
 RELEVANCE — include only stories serving one of these needs:
 
@@ -68,6 +69,7 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown fences, no prefix text,
   "topic": "tech"|"geo"|"macro",
   "confidence": "HIGH"|"MED"|"LOW",
   "newsDate": "YYYY-MM-DD",
+  "dateConfidence": "confirmed"|"estimated",
   "isMajorUpdate": false,
   "updateNote": "",
   "headlineEn": "English headline (primary, concise and specific)",
