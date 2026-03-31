@@ -2,9 +2,9 @@ name: Daily Intelligence Digest
 
 on:
   schedule:
-    # 12:00 UTC = 07:00 EST (UTC-5, Nov–Mar) / 08:00 EDT (UTC-4, Mar–Nov)
-    # Closest fixed UTC time to 07:00 Toronto year-round
-    - cron: '0 12 * * *'
+    # 10:30 UTC = 05:30 EST (UTC-5, Nov–Mar) / 06:30 EDT (UTC-4, Mar–Nov)
+    # Targets 06:30 Toronto time; actual delivery ~07:00–07:10 after GitHub queue delay
+    - cron: '30 10 * * *'
   workflow_dispatch:   # allow manual trigger from GitHub Actions UI
 
 jobs:
