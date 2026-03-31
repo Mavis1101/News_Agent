@@ -6,7 +6,7 @@ Mirrors the logic of news_agent_v3_5.html for server-side batch delivery.
 Flow:
   1. Load subscribers.json  (who to send to)
   2. Load dedup_history.json  (what was already sent)
-  3. Call Claude API with web_search tool  (same prompt as v3_5.html)
+  3. Call Claude API with web_search tool  (system prompt loaded from skills/news_extractor.md)
      — OR use demo data if DEMO=1 env var is set (skips API, free)
   4. Filter duplicates; update dedup_history.json
   5. Build HTML email  (same layout as v3_5.html → showEmail())
@@ -17,8 +17,8 @@ Required env vars:
   RESEND_API_KEY
 
 Optional env vars:
-  FROM_EMAIL   (default: onboarding@resend.dev)
-  STORY_COUNT  (default: 7)
+  FROM_EMAIL   (default: digest@lensignal.com)
+  STORY_COUNT  (default: 5)
   DEMO         (set to "1" to skip Claude API and use hardcoded demo data)
 """
 
@@ -36,6 +36,7 @@ import resend  # pip install resend
 BASE_DIR         = Path(__file__).parent
 SUBSCRIBERS_FILE = BASE_DIR / "subscribers.json"
 DEDUP_FILE       = BASE_DIR / "dedup_history.json"
+SKILLS_DIR       = BASE_DIR / "skills"   # ← NEW: skill files live here
 DEDUP_MAX        = 40
 
 # ── config ─────────────────────────────────────────────────────────────────────
@@ -63,6 +64,42 @@ FORM_ID       = "1FAIpQLScN3lYHkYmg0tdXkPi9ofkhUKcIqdf2HTa5J6N2j9t-0Ov8zQ"
 ENTRY_DATE    = "entry.763436474"
 ENTRY_RATING  = "entry.771339392"
 UNSUB_ID      = "1FAIpQLSc5y-sjQt7f3w18bqQT2rUVRQ8Ef5mJ9fCmufKlmiKqYcEFHw"
+
+
+# ── skill loader ───────────────────────────────────────────────────────────────
+def render_skill(name: str, **kwargs) -> str:
+    """
+    Load a skill file from skills/{name}.md, strip YAML frontmatter if present,
+    and substitute %%PLACEHOLDER%% tokens with caller-supplied values.
+
+    Why %%PLACEHOLDER%% and not Python's .format()?
+    The skill files contain JSON schema examples with bare { } braces.
+    Using .format() would require doubling every brace in the schema, which
+    makes the files hard to read and easy to break. The %%KEY%% convention
+    sidesteps that entirely.
+    """
+    path = SKILLS_DIR / f"{name}.md"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Skill file not found: {path}\n"
+            f"Expected location: phase2-mvp/skills/{name}.md"
+        )
+
+    content = path.read_text(encoding="utf-8")
+
+    # Strip YAML frontmatter (--- block at the top of the file)
+    if content.startswith("---\n"):
+        end = content.find("\n---\n", 4)
+        if end != -1:
+            content = content[end + 5:]
+
+    content = content.strip()
+
+    # Substitute %%KEY%% placeholders
+    for key, value in kwargs.items():
+        content = content.replace(f"%%{key.upper()}%%", str(value))
+
+    return content
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
@@ -129,7 +166,7 @@ def _repair_json_quotes(json_str: str) -> str:
                     j += 1
                 next_sig = json_str[j] if j < n else ''
 
-                if next_sig in (':',  ',', '}', ']'):
+                if next_sig in (':', ',', '}', ']'):
                     # Legitimate end-of-string delimiter
                     result.append('"')
                     i += 1
@@ -178,71 +215,29 @@ def _parse_json_array(raw: str) -> list:
 
 # ── Claude API call ────────────────────────────────────────────────────────────
 def fetch_news(recent_keys: list) -> list:
+    """
+    Call Claude with web_search to fetch today's news.
+
+    Change from monolith: the system prompt (SYS) is now loaded from
+    skills/news_extractor.md instead of being hard-coded in this function.
+    The user message (USER) stays inline because it is short and contains
+    runtime-only values (today's date, story count) that are not reusable.
+    """
     from datetime import timedelta
     now       = datetime.now(timezone.utc)
     today     = now.strftime("%Y-%m-%d")
     yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
     keys_str  = ", ".join(recent_keys) if recent_keys else "none"
 
-    SYS = f"""You are an elite intelligence analyst. Your task is to find today's most important news and return a strict JSON array — bilingual English + Chinese — with English as the primary language.
+    # ── Load system prompt from skill file ────────────────────────────────────
+    SYS = render_skill(
+        "news_extractor",
+        today=today,
+        yesterday=yesterday,
+        keys_str=keys_str,
+    )
 
-SOURCE PRIORITY RULES (mandatory):
-T1 (highest): Government official statements, White House/State Council/Parliament releases, central bank announcements (Fed/PBOC/ECB), regulatory official notices, military official statements.
-T2: Major corporate IR pages, earnings calls, official press releases (Apple Newsroom, NVIDIA IR, Huawei official site), exchange filings, SEC/HKEX/SSE documents.
-T3: Reuters, Bloomberg, Xinhua, FT, Nikkei, WSJ, SCMP.
-T4: Other media, blogs, opinion pieces — must note T4 in output, confidence never exceeds MED.
-
-Rules:
-- T4 sources: confidence MAX is MED, never HIGH.
-- If same event has T1/T2 source available, use that and ignore T4.
-- sourceUrl must be the best available URL from search results already retrieved — prefer official sources but do NOT perform additional searches to find a better URL.
-- newsDate must be the actual publication/announcement date in YYYY-MM-DD format.
-- isMajorUpdate: set true ONLY if this story is a significant new development on a previously known topic (e.g. policy announced before, now signed into law). Otherwise false.
-
-FRESHNESS REQUIREMENT (mandatory):
-- ONLY include stories where newsDate is {today} OR {yesterday}.
-- The event or announcement itself must have occurred within the last 24 hours — not merely been reported today.
-- If a story's underlying event happened more than 24 hours ago, EXCLUDE it even if it appeared in today's search results.
-- If you cannot confirm a story's date from the search results already retrieved, SKIP it — do not perform additional searches to verify dates.
-- Stories older than 24 hours must be REJECTED, no exceptions.
-
-DEDUPLICATION: The following story keys were already sent recently — do NOT include them unless isMajorUpdate is true:
-{keys_str}
-
-CRITICAL JSON RULES — MUST FOLLOW:
-- NEVER use ASCII double-quote characters (") inside any string value. They break JSON parsing.
-- For quoted words/phrases inside Chinese strings use 「」or 『』brackets instead of "".
-- For quoted words/phrases inside English strings use single quotes ('word') instead of "word".
-- Every string value must be a single unbroken JSON string with NO unescaped double quotes inside it.
-- Do NOT truncate or abbreviate any field — complete every object fully before the closing bracket.
-
-OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanation. Each object:
-{{
-  "rank": number,
-  "sourceTier": "T1"|"T2"|"T3"|"T4",
-  "source": "Source name (English)",
-  "sourceCn": "来源名称（中文）",
-  "sourceUrl": "URL",
-  "topic": "tech"|"geo"|"macro",
-  "confidence": "HIGH"|"MED"|"LOW",
-  "newsDate": "YYYY-MM-DD",
-  "isMajorUpdate": false,
-  "updateNote": "",
-  "headlineEn": "English headline (primary, concise and specific)",
-  "headlineCn": "中文标题",
-  "whoEn": "who",       "whoCn": "何人",
-  "whatEn": "what",     "whatCn": "何事",
-  "whenEn": "when",     "whenCn": "何时（含具体日期）",
-  "whereEn": "where",   "whereCn": "何地",
-  "whyEn": "why",       "whyCn": "为何/背景",
-  "investEn": "[Analysis] Investment implications…",
-  "investCn": "[分析] 投资影响…",
-  "geoEn": "[Analysis] Geopolitical implications…",
-  "geoCn": "[分析] 地缘政治影响…",
-  "careerEn": "[Analysis] Career/AI job market implications…",
-  "careerCn": "[分析] 对AI/科技职场的影响…"
-}}"""
-
+    # ── User message stays inline (runtime-only, not reusable) ───────────────
     USER = (
         f"Today is {today}. Search for the {STORY_COUNT} most important news stories "
         f"published or announced between {yesterday} and {today} (last 24 hours only) "
@@ -274,7 +269,7 @@ OUTPUT FORMAT: Return ONLY a raw JSON array, no markdown, no prefix, no explanat
     # Attempt 1 & 2: standard parse + inline repair
     try:
         return _parse_json_array(raw)
-    except ValueError as first_err:
+    except ValueError:
         pass
 
     # Attempt 3: ask Claude (no web search, cheap) to return corrected JSON
@@ -538,11 +533,11 @@ def build_email_html(items: list, today: str) -> str:
               border-radius:6px;color:#d4943a;text-decoration:none;
               font-size:13px;font-family:Georgia,serif">⚑ Report an issue</a>
   </div>
-  <p style="font-size:11px;color:#555;font-family:Georgia,serif">
+  <p style="font-size:11px;color:#9a9890;font-family:Georgia,serif">
     Analysis sections are AI inference — not confirmed fact. Always verify before making decisions.<br>
     分析部分为AI推断，非确认事实。请在做出决策前自行核实。<br><br>
     <a href="{open_unsub}"
-       style="color:#444;text-decoration:underline;font-size:11px">Unsubscribe</a>
+       style="color:#9a9890;text-decoration:underline;font-size:11px">Unsubscribe</a>
   </p>
 </div>
 
@@ -572,7 +567,10 @@ def send_emails(subscribers: list, subject: str, html: str) -> None:
 
 # ── main ───────────────────────────────────────────────────────────────────────
 def main():
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    from datetime import timedelta
+    now       = datetime.now(timezone.utc)
+    today     = now.strftime("%Y-%m-%d")
+    cutoff    = (now - timedelta(days=7)).strftime("%Y-%m-%d")
     print(f"\n── Intelligence Digest · {today} ──────────────────────")
 
     # Load data
@@ -585,8 +583,8 @@ def main():
         print("  No subscribers — exiting.")
         sys.exit(0)
 
-    # Prepare dedup context (last DEDUP_MAX keys)
-    recent_keys = list(dedup.keys())[-DEDUP_MAX:]
+    # Prepare dedup context — only keys from the last 7 days
+    recent_keys = [k for k, v in dedup.items() if v.get("date", "") >= cutoff]
 
     # Fetch news — real API or demo mode
     if os.environ.get("DEMO") == "1":
@@ -622,10 +620,8 @@ def main():
     items.sort(key=lambda x: tier_order.get(x.get("sourceTier", "T4"), 3))
     print(f"  After dedup   : {len(items)} stories")
 
-    # Trim dedup history
-    if len(new_dedup) > DEDUP_MAX:
-        keys      = list(new_dedup.keys())
-        new_dedup = {k: new_dedup[k] for k in keys[-DEDUP_MAX:]}
+    # Trim dedup history — keep only last 7 days
+    new_dedup = {k: v for k, v in new_dedup.items() if v.get("date", "") >= cutoff}
 
     save_json(DEDUP_FILE, new_dedup)
     print("  Dedup history saved")
