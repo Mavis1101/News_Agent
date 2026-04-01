@@ -52,10 +52,12 @@ TOPIC_LABEL = {
 }
 
 TIER_COLOR = {
-    "T1": "#c8a96e",
-    "T2": "#4db8a0",
-    "T3": "#6090d8",
-    "T4": "#8a8880",
+    "T1":  "#c8a96e",
+    "T2":  "#4db8a0",
+    "T3a": "#6090d8",   # trusted wire: Reuters, Bloomberg, Xinhua, Nikkei
+    "T3b": "#7a70c0",   # cautious: WSJ, FT, SCMP
+    "T3":  "#6090d8",   # fallback for legacy data
+    "T4":  "#8a8880",
 }
 
 # ── feedback URLs (must match news_agent_v3_5.html exactly) ───────────────────
@@ -224,27 +226,25 @@ def fetch_news(recent_keys: list) -> list:
     runtime-only values (today's date, story count) that are not reusable.
     """
     from datetime import timedelta
-    now       = datetime.now(timezone.utc)
-    today     = now.strftime("%Y-%m-%d")
-    yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
-    keys_str  = ", ".join(recent_keys) if recent_keys else "none"
+    now           = datetime.now(timezone.utc)
+    today         = now.strftime("%Y-%m-%d")
+    six_days_ago  = (now - timedelta(days=6)).strftime("%Y-%m-%d")
+    keys_str      = ", ".join(recent_keys) if recent_keys else "none"
 
     # ── Load system prompt from skill file ────────────────────────────────────
     SYS = render_skill(
         "news_extractor",
         today=today,
-        yesterday=yesterday,
+        six_days_ago=six_days_ago,
         keys_str=keys_str,
     )
 
     # ── User message stays inline (runtime-only, not reusable) ───────────────
     USER = (
         f"Today is {today}. Search for the {STORY_COUNT} most important news stories "
-        f"published or announced between {yesterday} and {today} (last 24 hours only) "
+        f"published or announced between {six_days_ago} and {today} "
         f"on topics: {TOPICS}.\n"
         f"Focus on: AI/semiconductors, US-China relations, geopolitics, macro, tech policy.\n"
-        f"STRICT RULE: Every story's newsDate must be {yesterday} or {today}. "
-        f"Reject any story whose underlying event occurred before {yesterday}.\n"
         f"Prioritise T1 (government/central bank official) and T2 (major corporate official) sources.\n"
         f"Return complete JSON array only."
     )
@@ -394,7 +394,14 @@ def build_email_html(items: list, today: str) -> str:
     for i, it in enumerate(items, 1):
         tier        = it.get("sourceTier", "T3")
         tier_color  = TIER_COLOR.get(tier, "#8a8880")
-        date_str    = f" · {it['newsDate']}" if it.get("newsDate") else ""
+        date_estimated = it.get("dateConfidence", "confirmed") == "estimated"
+        date_label     = (
+            f" · ~{it['newsDate']}"
+            f'<span style="color:#8a8880;font-size:9px;font-family:monospace"> est.</span>'
+            if it.get("newsDate") and date_estimated
+            else f" · {it['newsDate']}" if it.get("newsDate") else ""
+        )
+        date_str = date_label
         topic_label = TOPIC_LABEL.get(it.get("topic", ""), it.get("topic", ""))
         confidence  = it.get("confidence", "MED")
         is_major    = it.get("isMajorUpdate", False)
@@ -615,9 +622,9 @@ def main():
 
     items = filtered if filtered else raw_items   # fallback: send all if all duped
 
-    # Sort by source tier T1 → T2 → T3 → T4
-    tier_order = {"T1": 0, "T2": 1, "T3": 2, "T4": 3}
-    items.sort(key=lambda x: tier_order.get(x.get("sourceTier", "T4"), 3))
+    # Sort by source tier T1 → T2 → T3a → T3b → T4
+    tier_order = {"T1": 0, "T2": 1, "T3a": 2, "T3b": 3, "T3": 2, "T4": 4}
+    items.sort(key=lambda x: tier_order.get(x.get("sourceTier", "T4"), 4))
     print(f"  After dedup   : {len(items)} stories")
 
     # Trim dedup history — keep only last 7 days
